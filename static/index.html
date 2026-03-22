@@ -51,9 +51,7 @@
       background: #fff;
     }
 
-    .add-form input:focus {
-      border-color: #6366f1;
-    }
+    .add-form input:focus { border-color: #6366f1; }
 
     .add-form button {
       padding: 12px 20px;
@@ -107,13 +105,11 @@
       padding: 14px 16px;
       background: #fff;
       border-radius: 10px;
-      border: 2px solid transparent;
       box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-      transition: box-shadow 0.2s, border-color 0.2s;
+      transition: box-shadow 0.2s;
     }
 
     .todo-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
     .todo-item.completed { opacity: 0.6; }
 
     .todo-checkbox {
@@ -142,7 +138,6 @@
       cursor: pointer;
       color: #d1d5db;
       font-size: 1.2rem;
-      line-height: 1;
       padding: 2px 6px;
       border-radius: 6px;
       transition: color 0.2s, background 0.2s;
@@ -188,49 +183,43 @@
   </div>
 
   <script>
-    let todos = [];
+    const STORAGE_KEY = 'todos';
     let filter = 'all';
 
-    async function fetchTodos() {
-      const res = await fetch('/api/todos');
-      todos = await res.json();
+    function loadTodos() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    }
+
+    function saveTodos(todos) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+    }
+
+    function addTodo(title) {
+      const todos = loadTodos();
+      todos.push({ id: crypto.randomUUID(), title, completed: false });
+      saveTodos(todos);
       render();
     }
 
-    async function addTodo(title) {
-      const res = await fetch('/api/todos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title }),
-      });
-      if (res.ok) {
-        const todo = await res.json();
-        todos.push(todo);
-        render();
-      }
-    }
-
-    async function toggleTodo(id) {
-      const todo = todos.find(t => t.id === id);
-      const res = await fetch(`/api/todos/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: !todo.completed }),
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        todos = todos.map(t => t.id === id ? updated : t);
-        render();
-      }
-    }
-
-    async function deleteTodo(id) {
-      await fetch(`/api/todos/${id}`, { method: 'DELETE' });
-      todos = todos.filter(t => t.id !== id);
+    function toggleTodo(id) {
+      const todos = loadTodos().map(t =>
+        t.id === id ? { ...t, completed: !t.completed } : t
+      );
+      saveTodos(todos);
       render();
+    }
+
+    function deleteTodo(id) {
+      saveTodos(loadTodos().filter(t => t.id !== id));
+      render();
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
     function render() {
+      const todos = loadTodos();
       const list = document.getElementById('todoList');
       const stats = document.getElementById('stats');
 
@@ -261,18 +250,11 @@
       stats.textContent = `${done} / ${todos.length} tâche(s) terminée(s)`;
     }
 
-    function escapeHtml(str) {
-      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-
-    document.getElementById('addForm').addEventListener('submit', async (e) => {
+    document.getElementById('addForm').addEventListener('submit', e => {
       e.preventDefault();
       const input = document.getElementById('newTodo');
       const title = input.value.trim();
-      if (title) {
-        input.value = '';
-        await addTodo(title);
-      }
+      if (title) { input.value = ''; addTodo(title); }
     });
 
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -284,7 +266,7 @@
       });
     });
 
-    fetchTodos();
+    render();
   </script>
 </body>
 </html>
