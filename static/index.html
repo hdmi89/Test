@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Todo App</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 48px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 32px;
+      font-size: 0.95rem;
+    }
+
+    .add-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .add-form input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fff;
+    }
+
+    .add-form input:focus {
+      border-color: #6366f1;
+    }
+
+    .add-form button {
+      padding: 12px 20px;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .add-form button:hover { background: #4f46e5; }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .filter-btn {
+      padding: 6px 14px;
+      border: 2px solid #e5e7eb;
+      border-radius: 20px;
+      background: #fff;
+      color: #6b7280;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active {
+      border-color: #6366f1;
+      background: #6366f1;
+      color: #fff;
+    }
+
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #fff;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .todo-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+    .todo-item.completed { opacity: 0.6; }
+
+    .todo-checkbox {
+      width: 20px;
+      height: 20px;
+      accent-color: #6366f1;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .todo-title {
+      flex: 1;
+      font-size: 1rem;
+      color: #111827;
+      word-break: break-word;
+    }
+
+    .todo-item.completed .todo-title {
+      text-decoration: line-through;
+      color: #9ca3af;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #d1d5db;
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 6px;
+      transition: color 0.2s, background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .delete-btn:hover { color: #ef4444; background: #fee2e2; }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 0;
+      color: #9ca3af;
+    }
+
+    .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+
+    .stats {
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: #9ca3af;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📝 Todo App</h1>
+    <p class="subtitle">Gérez vos tâches simplement.</p>
+
+    <form class="add-form" id="addForm">
+      <input type="text" id="newTodo" placeholder="Nouvelle tâche..." autocomplete="off" />
+      <button type="submit">Ajouter</button>
+    </form>
+
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">Toutes</button>
+      <button class="filter-btn" data-filter="active">En cours</button>
+      <button class="filter-btn" data-filter="completed">Terminées</button>
+    </div>
+
+    <div class="todo-list" id="todoList"></div>
+    <p class="stats" id="stats"></p>
+  </div>
+
+  <script>
+    let todos = [];
+    let filter = 'all';
+
+    async function fetchTodos() {
+      const res = await fetch('/api/todos');
+      todos = await res.json();
+      render();
+    }
+
+    async function addTodo(title) {
+      const res = await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      });
+      if (res.ok) {
+        const todo = await res.json();
+        todos.push(todo);
+        render();
+      }
+    }
+
+    async function toggleTodo(id) {
+      const todo = todos.find(t => t.id === id);
+      const res = await fetch(`/api/todos/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: !todo.completed }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        todos = todos.map(t => t.id === id ? updated : t);
+        render();
+      }
+    }
+
+    async function deleteTodo(id) {
+      await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+      todos = todos.filter(t => t.id !== id);
+      render();
+    }
+
+    function render() {
+      const list = document.getElementById('todoList');
+      const stats = document.getElementById('stats');
+
+      const visible = todos.filter(t => {
+        if (filter === 'active') return !t.completed;
+        if (filter === 'completed') return t.completed;
+        return true;
+      });
+
+      if (visible.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">✅</div>
+            <p>Aucune tâche à afficher.</p>
+          </div>`;
+      } else {
+        list.innerHTML = visible.map(todo => `
+          <div class="todo-item ${todo.completed ? 'completed' : ''}">
+            <input class="todo-checkbox" type="checkbox" ${todo.completed ? 'checked' : ''}
+              onchange="toggleTodo('${todo.id}')" />
+            <span class="todo-title">${escapeHtml(todo.title)}</span>
+            <button class="delete-btn" onclick="deleteTodo('${todo.id}')" title="Supprimer">✕</button>
+          </div>
+        `).join('');
+      }
+
+      const done = todos.filter(t => t.completed).length;
+      stats.textContent = `${done} / ${todos.length} tâche(s) terminée(s)`;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    document.getElementById('addForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('newTodo');
+      const title = input.value.trim();
+      if (title) {
+        input.value = '';
+        await addTodo(title);
+      }
+    });
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filter = btn.dataset.filter;
+        render();
+      });
+    });
+
+    fetchTodos();
+  </script>
+</body>
+</html>
