@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TP Location — Location de Matériel de Travaux Publics</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="brand-icon">⚙</span>
+      <span class="brand-name">TP<strong>Location</strong></span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#catalog" class="nav-link">Catalogue</a></li>
+      <li><a href="#how-it-works" class="nav-link">Comment ça marche</a></li>
+      <li><a href="#contact" class="nav-link">Contact</a></li>
+    </ul>
+    <button class="btn btn-primary nav-cta" onclick="scrollToSection('catalog')">Louer maintenant</button>
+    <button class="hamburger" id="hamburger" aria-label="Menu">&#9776;</button>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#catalog" onclick="closeMobileMenu()">Catalogue</a>
+    <a href="#how-it-works" onclick="closeMobileMenu()">Comment ça marche</a>
+    <a href="#contact" onclick="closeMobileMenu()">Contact</a>
+  </div>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-content">
+      <span class="hero-badge">Matériel TP professionnel</span>
+      <h1 class="hero-title">Location de Mini Pelles<br /><span class="highlight">Lovol & Plus</span></h1>
+      <p class="hero-subtitle">
+        Louez des mini pelles, chargeuses et équipements de chantier de qualité professionnelle.
+        Livraison sur site, tarifs journaliers compétitifs.
+      </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-lg" onclick="scrollToSection('catalog')">Voir le catalogue</button>
+        <button class="btn btn-outline btn-lg" onclick="scrollToSection('how-it-works')">Comment ça marche</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <strong>15+</strong>
+          <span>Engins disponibles</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <strong>48h</strong>
+          <span>Livraison max</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <strong>7j/7</strong>
+          <span>Support client</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="machine-card-hero">
+        <div class="machine-illustration">
+          <svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg" class="excavator-svg">
+            <!-- Tracks -->
+            <rect x="20" y="120" width="160" height="20" rx="10" fill="#2d3748"/>
+            <rect x="30" y="115" width="140" height="12" rx="6" fill="#4a5568"/>
+            <!-- Body -->
+            <rect x="50" y="80" width="100" height="45" rx="8" fill="#e67e22"/>
+            <!-- Cab -->
+            <rect x="70" y="55" width="60" height="30" rx="6" fill="#e67e22"/>
+            <rect x="75" y="58" width="25" height="18" rx="3" fill="#85c1e9"/>
+            <!-- Boom base -->
+            <rect x="130" y="70" width="12" height="8" rx="2" fill="#d35400" transform="rotate(-15 130 70)"/>
+            <!-- Boom -->
+            <line x1="138" y1="68" x2="170" y2="30" stroke="#d35400" stroke-width="8" stroke-linecap="round"/>
+            <!-- Arm -->
+            <line x1="170" y1="30" x2="185" y2="70" stroke="#c0392b" stroke-width="6" stroke-linecap="round"/>
+            <!-- Bucket -->
+            <path d="M183 70 L195 80 L185 88 L175 80 Z" fill="#c0392b"/>
+            <!-- Exhaust -->
+            <rect x="62" y="45" width="5" height="15" rx="2" fill="#4a5568"/>
+            <!-- Logo area -->
+            <rect x="58" y="90" width="50" height="12" rx="3" fill="#d35400"/>
+            <text x="83" y="100" font-size="7" fill="white" text-anchor="middle" font-weight="bold">LOVOL</text>
+          </svg>
+        </div>
+        <div class="machine-card-info">
+          <h3>Lovol FR65E2</h3>
+          <p>Mini pelle 6,5T</p>
+          <span class="price-badge">À partir de 290€/jour</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CATALOG -->
+  <section id="catalog" class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Catalogue de Location</h2>
+        <p class="section-subtitle">Choisissez votre engin parmi notre flotte de matériel TP entretenu et certifié</p>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">Tout</button>
+        <button class="filter-btn" data-filter="mini-pelle">Mini Pelles</button>
+        <button class="filter-btn" data-filter="chargeuse">Chargeuses</button>
+        <button class="filter-btn" data-filter="compacteur">Compacteurs</button>
+      </div>
+
+      <!-- SEARCH -->
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Rechercher un engin (ex: Lovol, mini pelle...)" />
+        <span class="search-icon">&#128269;</span>
+      </div>
+
+      <!-- EQUIPMENT GRID -->
+      <div class="equipment-grid" id="equipmentGrid">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works" class="section section-alt">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Comment ça marche</h2>
+        <p class="section-subtitle">Louez votre matériel en 3 étapes simples</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-icon">&#128269;</div>
+          <h3>Choisissez votre engin</h3>
+          <p>Parcourez notre catalogue et sélectionnez le matériel adapté à votre chantier.</p>
+        </div>
+        <div class="step-arrow">&#8594;</div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-icon">&#128203;</div>
+          <h3>Remplissez la demande</h3>
+          <p>Indiquez vos dates, le lieu de livraison et vos coordonnées. C'est rapide.</p>
+        </div>
+        <div class="step-arrow">&#8594;</div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-icon">&#128665;</div>
+          <h3>Livraison sur site</h3>
+          <p>Nous livrons et récupérons l'engin directement sur votre chantier.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact" class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Nous Contacter</h2>
+        <p class="section-subtitle">Une question ? Notre équipe répond sous 2h en jours ouvrés</p>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-info">
+          <div class="contact-item">
+            <span class="contact-icon">&#128222;</span>
+            <div>
+              <strong>Téléphone</strong>
+              <p>+33 (0)4 XX XX XX XX</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <span class="contact-icon">&#128231;</span>
+            <div>
+              <strong>Email</strong>
+              <p>contact@tplocation.fr</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <span class="contact-icon">&#128205;</span>
+            <div>
+              <strong>Zone de livraison</strong>
+              <p>Rayon 150 km autour de Lyon</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <span class="contact-icon">&#128336;</span>
+            <div>
+              <strong>Horaires</strong>
+              <p>Lun–Ven 7h–18h / Sam 8h–12h</p>
+            </div>
+          </div>
+        </div>
+        <form class="contact-form" id="contactForm" onsubmit="submitContactForm(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="contactName">Nom *</label>
+              <input type="text" id="contactName" required placeholder="Votre nom" />
+            </div>
+            <div class="form-group">
+              <label for="contactEmail">Email *</label>
+              <input type="email" id="contactEmail" required placeholder="votre@email.com" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="contactMessage">Message *</label>
+            <textarea id="contactMessage" rows="5" required placeholder="Décrivez votre besoin..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full">Envoyer le message</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div class="footer-brand">
+        <span class="brand-icon">⚙</span>
+        <span class="brand-name">TP<strong>Location</strong></span>
+        <p>Location de matériel TP professionnel depuis 2010.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Navigation</h4>
+        <a href="#catalog">Catalogue</a>
+        <a href="#how-it-works">Comment ça marche</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <div class="footer-links">
+        <h4>Légal</h4>
+        <a href="#">Mentions légales</a>
+        <a href="#">CGU / CGV</a>
+        <a href="#">Politique de confidentialité</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 TPLocation — Tous droits réservés</p>
+    </div>
+  </footer>
+
+  <!-- BOOKING MODAL -->
+  <div class="modal-overlay" id="bookingModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()" aria-label="Fermer">&times;</button>
+      <div class="modal-header">
+        <h2 id="modalTitle">Demande de location</h2>
+        <p id="modalSubtitle" class="modal-subtitle"></p>
+      </div>
+      <form id="bookingForm" onsubmit="submitBooking(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName">Prénom *</label>
+            <input type="text" id="firstName" required placeholder="Jean" />
+          </div>
+          <div class="form-group">
+            <label for="lastName">Nom *</label>
+            <input type="text" id="lastName" required placeholder="Dupont" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input type="email" id="email" required placeholder="jean@example.com" />
+          </div>
+          <div class="form-group">
+            <label for="phone">Téléphone *</label>
+            <input type="tel" id="phone" required placeholder="06 XX XX XX XX" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="startDate">Date de début *</label>
+            <input type="date" id="startDate" required />
+          </div>
+          <div class="form-group">
+            <label for="endDate">Date de fin *</label>
+            <input type="date" id="endDate" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="address">Adresse de livraison *</label>
+          <input type="text" id="address" required placeholder="123 rue du Chantier, 69000 Lyon" />
+        </div>
+        <div class="form-group">
+          <label for="notes">Notes (optionnel)</label>
+          <textarea id="notes" rows="3" placeholder="Accès chantier, horaires préférés..."></textarea>
+        </div>
+        <div class="price-summary" id="priceSummary">
+          <div class="price-row">
+            <span>Durée :</span>
+            <span id="durationDisplay">—</span>
+          </div>
+          <div class="price-row">
+            <span>Tarif journalier :</span>
+            <span id="dailyRateDisplay">—</span>
+          </div>
+          <div class="price-row price-total">
+            <span>Total estimé :</span>
+            <span id="totalDisplay">—</span>
+          </div>
+          <p class="price-note">* Tarif hors livraison/reprise. Un devis définitif vous sera envoyé par email.</p>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full btn-lg">Confirmer la demande</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- SUCCESS MODAL -->
+  <div class="modal-overlay" id="successModal" role="dialog" aria-modal="true">
+    <div class="modal modal-success">
+      <div class="success-icon">&#10003;</div>
+      <h2>Demande envoyée !</h2>
+      <p>Votre demande de location a bien été enregistrée. Nous vous contacterons dans les 2h pour confirmer la disponibilité.</p>
+      <div class="success-ref" id="successRef"></div>
+      <button class="btn btn-primary" onclick="closeSuccessModal()">Fermer</button>
+    </div>
+  </div>
+
+  <!-- DETAIL MODAL -->
+  <div class="modal-overlay" id="detailModal" role="dialog" aria-modal="true">
+    <div class="modal modal-detail">
+      <button class="modal-close" onclick="closeDetailModal()" aria-label="Fermer">&times;</button>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
