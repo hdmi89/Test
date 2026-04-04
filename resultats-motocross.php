@@ -61,11 +61,19 @@ function rmx_is_real_pdf( $filepath, $filename ) {
 function rmx_render_shortcode( $atts = [] ) {
 
     $atts     = shortcode_atts( [ 'base' => 'uploads/resultats' ], $atts );
-    $base_dir = WP_CONTENT_DIR . '/' . trim( $atts['base'], '/' ) . '/';
-    $base_url = content_url() . '/' . trim( $atts['base'], '/' ) . '/';
+    $base_raw = trim( $atts['base'], '/' );
 
-    if ( ! is_dir( $base_dir ) ) {
-        return '<p class="rmx-error">Dossier ' . esc_html( $base_dir ) . ' introuvable.</p>';
+    // Validation du paramètre base : interdit les chemins absolus et les path traversal (..)
+    if ( empty( $base_raw ) || preg_match( '/(\.\.|^\/|\p{C})/u', $base_raw ) ) {
+        return '<p class="rmx-error">Paramètre <code>base</code> invalide.</p>';
+    }
+
+    $base_dir = WP_CONTENT_DIR . '/' . $base_raw . '/';
+    $base_url = content_url() . '/' . $base_raw . '/';
+
+    // Vérification que le dossier résolu est bien sous wp-content/
+    if ( ! is_dir( $base_dir ) || ! rmx_is_within_base( $base_dir, WP_CONTENT_DIR ) ) {
+        return '<p class="rmx-error">Dossier introuvable ou non autorisé.</p>';
     }
 
     $sort_order = [
