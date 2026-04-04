@@ -49,9 +49,10 @@ function rmx_is_within_base( $path, $base_dir ) {
     if ( $real_path === false || $real_base === false ) return false;
 
     // On normalise avec un séparateur final pour bloquer "resultats-evil/"
+    // Compatibilité PHP 7.x : on n'utilise pas str_starts_with (PHP 8.0+)
     $real_base_with_sep = rtrim( $real_base, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR;
 
-    return str_starts_with( $real_path, $real_base_with_sep );
+    return substr( $real_path, 0, strlen( $real_base_with_sep ) ) === $real_base_with_sep;
 }
 
 /* ═══════════════════════════════════════════════════════════════
