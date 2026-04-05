@@ -3,20 +3,26 @@
  * Shortcode [resultats_motocross]  — v5 sécurisé (architecture v4 conservée)
  *
  * Corrections de sécurité appliquées sur la base du v4 fonctionnel :
- *  - Validation path traversal sur chaque segment de dossier (rmx_is_safe_segment)
+ *  - Toutes les fonctions sont protégées par function_exists() pour éviter
+ *    les erreurs "Cannot redeclare" si le code est chargé deux fois
+ *  - Validation path traversal sur chaque segment de dossier
  *  - rmx_is_within_base() avec séparateur final (bloque les dossiers adjacents)
  *    et compatible PHP 7.x (substr au lieu de str_starts_with)
  *  - Vérification MIME réelle via finfo en plus de l'extension
  *  - rawurlencode() sur chaque segment de $cat_url
+ *  - Validation du paramètre base= du shortcode
  *  - Pas d'AJAX : toutes les données sont embarquées côté serveur comme en v4
  */
 
-add_shortcode( 'resultats_motocross', 'rmx_render_shortcode' );
+if ( ! shortcode_exists( 'resultats_motocross' ) ) {
+    add_shortcode( 'resultats_motocross', 'rmx_render_shortcode' );
+}
 
 /* ═══════════════════════════════════════════════════════════════
    SÉCURITÉ — helpers
 ═══════════════════════════════════════════════════════════════ */
 
+if ( ! function_exists( 'rmx_is_safe_segment' ) ) :
 /**
  * Valide qu'un segment de chemin ne contient pas de tentative
  * de path traversal (.., slashes, caractères de contrôle).
@@ -25,7 +31,9 @@ function rmx_is_safe_segment( $segment ) {
     if ( empty( $segment ) || strlen( $segment ) > 200 ) return false;
     return ! preg_match( '/(\.\.|[\/\\\\]|\p{C})/u', $segment );
 }
+endif;
 
+if ( ! function_exists( 'rmx_is_within_base' ) ) :
 /**
  * Vérifie qu'un chemin absolu est bien SOUS le dossier de base.
  * Résout les symlinks via realpath() et ajoute un séparateur final
@@ -39,7 +47,9 @@ function rmx_is_within_base( $path, $base_dir ) {
     $real_base_with_sep = rtrim( $real_base, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR;
     return substr( $real_path, 0, strlen( $real_base_with_sep ) ) === $real_base_with_sep;
 }
+endif;
 
+if ( ! function_exists( 'rmx_is_real_pdf' ) ) :
 /**
  * Vérifie qu'un fichier est un PDF via l'extension ET le magic number (finfo).
  */
@@ -53,11 +63,13 @@ function rmx_is_real_pdf( $filepath, $filename ) {
     }
     return true;
 }
+endif;
 
 /* ═══════════════════════════════════════════════════════════════
    SHORTCODE — rendu complet côté serveur (pas d'AJAX)
 ═══════════════════════════════════════════════════════════════ */
 
+if ( ! function_exists( 'rmx_render_shortcode' ) ) :
 function rmx_render_shortcode( $atts = [] ) {
 
     $atts     = shortcode_atts( [ 'base' => 'uploads/resultats' ], $atts );
@@ -106,7 +118,6 @@ function rmx_render_shortcode( $atts = [] ) {
     $tree = [];
 
     foreach ( rmx_sorted_dirs( $base_dir ) as $disc ) {
-        // Validation path traversal sur chaque segment
         if ( ! rmx_is_safe_segment( $disc ) ) continue;
         $disc_dir   = $base_dir . $disc . '/';
         $disc_label = mb_convert_case( str_replace( [ '-', '_' ], ' ', $disc ), MB_CASE_TITLE, 'UTF-8' );
@@ -129,10 +140,8 @@ function rmx_render_shortcode( $atts = [] ) {
                     if ( ! rmx_is_safe_segment( $cat_folder ) ) continue;
                     $cat_dir = $ep_dir . $cat_folder . '/';
 
-                    // Vérification que le dossier cat est bien sous base_dir
                     if ( ! rmx_is_within_base( $cat_dir, $base_dir ) ) continue;
 
-                    // rawurlencode sur chaque segment pour les URLs avec espaces/accents
                     $cat_url = $base_url
                         . rawurlencode( $disc )       . '/'
                         . rawurlencode( $year )       . '/'
@@ -158,10 +167,8 @@ function rmx_render_shortcode( $atts = [] ) {
         return '<p class="rmx-error">Aucun résultat disponible.</p>';
     }
 
-    // wp_json_encode gère l'échappement pour le contexte JS — pas de esc_html() ici
     $json = wp_json_encode( $tree );
 
-    /* ── Rendu HTML ── */
     ob_start();
     ?>
     <div id="rmx-app">
@@ -308,7 +315,7 @@ function rmx_render_shortcode( $atts = [] ) {
           row.className = 'rmx-row';
           const lbl  = document.createElement('span');
           lbl.className   = 'rmx-row-label';
-          lbl.textContent = sec.name;   // textContent : pas de risque XSS
+          lbl.textContent = sec.name;
           const btns = document.createElement('div');
           btns.className = 'rmx-row-buttons';
           sec.files.forEach((f, i) => {
@@ -332,11 +339,13 @@ function rmx_render_shortcode( $atts = [] ) {
     <?php
     return ob_get_clean();
 }
+endif;
 
 /* ═══════════════════════════════════════════════════════════════
    FONCTIONS UTILITAIRES
 ═══════════════════════════════════════════════════════════════ */
 
+if ( ! function_exists( 'rmx_sorted_dirs' ) ) :
 function rmx_sorted_dirs( $dir ) {
     if ( ! is_dir( $dir ) ) return [];
     $entries = array_diff( scandir( $dir ), [ '.', '..' ] );
@@ -346,7 +355,9 @@ function rmx_sorted_dirs( $dir ) {
     usort( $dirs, 'strnatcasecmp' );
     return array_values( $dirs );
 }
+endif;
 
+if ( ! function_exists( 'rmx_remove_accents' ) ) :
 function rmx_remove_accents( $str ) {
     $str = mb_strtolower( $str, 'UTF-8' );
     return strtr( $str, [
@@ -358,14 +369,15 @@ function rmx_remove_accents( $str ) {
         'ç'=>'c','ñ'=>'n',
     ] );
 }
+endif;
 
+if ( ! function_exists( 'rmx_parse_sections' ) ) :
 function rmx_parse_sections( $cat_dir, $cat_url, $sort_order, $variant_keywords ) {
 
     $pdf_files = array_filter(
         array_diff( scandir( $cat_dir ), [ '.', '..' ] ),
         function ( $f ) use ( $cat_dir ) {
             if ( is_dir( $cat_dir . $f ) ) return false;
-            // Vérification extension + MIME réel (finfo si disponible)
             return rmx_is_real_pdf( $cat_dir . $f, $f );
         }
     );
@@ -374,7 +386,6 @@ function rmx_parse_sections( $cat_dir, $cat_url, $sort_order, $variant_keywords 
     $sections_map = [];
 
     foreach ( $pdf_files as $file ) {
-        // Vérification que le fichier est bien dans le dossier autorisé
         if ( ! rmx_is_within_base( $cat_dir . $file, $cat_dir ) ) continue;
 
         $stem         = pathinfo( $file, PATHINFO_FILENAME );
@@ -418,3 +429,4 @@ function rmx_parse_sections( $cat_dir, $cat_url, $sort_order, $variant_keywords 
 
     return $sections;
 }
+endif;
