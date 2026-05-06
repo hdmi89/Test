@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Twist — Closez plus vite. Convertissez mieux.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:             #06061A;
+      --card:           rgba(255,255,255,0.05);
+      --border:         rgba(255,255,255,0.09);
+      --border-hi:      rgba(255,255,255,0.18);
+      --primary:        #6366F1;
+      --primary-light:  #818CF8;
+      --violet:         #8B5CF6;
+      --pink:           #EC4899;
+      --text:           #F1F5F9;
+      --text-muted:     rgba(241,245,249,0.6);
+      --text-dim:       rgba(241,245,249,0.35);
+      --radius:         16px;
+      --radius-lg:      24px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    .aurora {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+    }
+
+    .orb-1 {
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(99,102,241,0.55) 0%, transparent 68%);
+      top: -280px; left: -160px;
+      animation: drift1 13s ease-in-out infinite alternate;
+    }
+    .orb-2 {
+      width: 560px; height: 560px;
+      background: radial-gradient(circle, rgba(139,92,246,0.45) 0%, transparent 68%);
+      top: -120px; right: -140px;
+      animation: drift2 11s ease-in-out infinite alternate;
+    }
+    .orb-3 {
+      width: 480px; height: 480px;
+      background: radial-gradient(circle, rgba(236,72,153,0.3) 0%, transparent 68%);
+      top: 42%; right: 8%;
+      animation: drift3 15s ease-in-out infinite alternate;
+    }
+    .orb-4 {
+      width: 640px; height: 640px;
+      background: radial-gradient(circle, rgba(79,70,229,0.22) 0%, transparent 68%);
+      bottom: -200px; left: 25%;
+      animation: drift4 17s ease-in-out infinite alternate;
+    }
+
+    @keyframes drift1 { to { transform: translate(70px, 90px) scale(1.12); } }
+    @keyframes drift2 { to { transform: translate(-90px, 70px) scale(0.88); } }
+    @keyframes drift3 { to { transform: translate(-70px, -90px) scale(1.18); } }
+    @keyframes drift4 { to { transform: translate(90px, -70px) scale(1.08); } }
+
+    .noise {
+      position: absolute;
+      inset: 0;
+      opacity: 0.032;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .page { position: relative; z-index: 1; }
+
+    .container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+
+    .glass {
+      background: var(--card);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: var(--radius-lg);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 24px;
+      border-radius: 11px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+      outline: none;
+      transition: box-shadow 0.25s, background 0.25s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+      color: #fff;
+      box-shadow: 0 4px 24px rgba(99,102,241,0.38);
+    }
+    .btn-primary:hover { box-shadow: 0 6px 36px rgba(99,102,241,0.58); }
+
+    .btn-ghost {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid var(--border-hi);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+    .btn-lg { padding: 14px 30px; font-size: 1rem; border-radius: 13px; }
+
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      padding: 14px 0;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      background: rgba(6,6,26,0.55);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.3rem;
+      letter-spacing: -0.025em;
+      color: var(--text);
+    }
+
+    .logo-mark {
+      width: 34px; height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #6366F1, #8B5CF6, #EC4899);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      box-shadow: 0 0 24px rgba(99,102,241,0.5);
+    }
+
+    .nav-links {
+      display: flex; gap: 28px; list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none;
+      font-size: 0.88rem; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 130px 0 80px;
+    }
+
+    .hero-inner { display: flex; flex-direction: column; align-items: center; }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 5px 14px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.38);
+      border-radius: 100px;
+      font-size: 0.78rem; font-weight: 600;
+      color: var(--primary-light);
+      margin-bottom: 32px;
+      opacity: 0;
+    }
+
+    .pulse {
+      width: 7px; height: 7px;
+      background: var(--primary-light);
+      border-radius: 50%;
+      animation: pulse 2.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(0.7); opacity: 0.45; }
+    }
+
+    .hero-h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(3.2rem, 7.5vw, 5.8rem);
+      font-weight: 700;
+      line-height: 1.04;
+      letter-spacing: -0.035em;
+      margin-bottom: 26px;
+      opacity: 0;
+    }
+
+    .grad {
+      background: linear-gradient(130deg, #818CF8 0%, #A78BFA 45%, #EC4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      max-width: 560px;
+      margin: 0 auto 44px;
+      font-size: 1.08rem;
+      line-height: 1.72;
+      color: var(--text-muted);
+      opacity: 0;
+    }
+
+    .hero-ctas {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px; flex-wrap: wrap;
+      margin-bottom: 60px;
+      opacity: 0;
+    }
+
+    .hero-proof {
+      display: flex; align-items: center; gap: 14px;
+      opacity: 0;
+    }
+
+    .avatars { display: flex; }
+    .av {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 2.5px solid var(--bg);
+      margin-left: -10px;
+      font-size: 0.68rem; font-weight: 700; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .av:first-child { margin-left: 0; }
+    .av-1 { background: linear-gradient(135deg,#6366F1,#8B5CF6); }
+    .av-2 { background: linear-gradient(135deg,#EC4899,#F43F5E); }
+    .av-3 { background: linear-gradient(135deg,#06B6D4,#0EA5E9); }
+    .av-4 { background: linear-gradient(135deg,#10B981,#059669); }
+    .av-5 { background: linear-gradient(135deg,#F59E0B,#EF4444); }
+
+    .proof-text { font-size: 0.83rem; color: var(--text-muted); }
+    .proof-text strong { color: var(--text); }
+    .stars { color: #FBBF24; font-size: 0.78rem; letter-spacing: 2px; display: block; margin-bottom: 2px; }
+
+    section { padding: 108px 0; }
+
+    .section-label {
+      display: inline-block;
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--primary-light);
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2rem, 4vw, 2.8rem);
+      font-weight: 700;
+      letter-spacing: -0.028em;
+      line-height: 1.14;
+      margin-bottom: 14px;
+    }
+
+    .section-sub {
+      font-size: 0.97rem;
+      color: var(--text-muted);
+      line-height: 1.72;
+      max-width: 500px;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 68px;
+      opacity: 0;
+    }
+    .section-header .section-sub { margin: 0 auto; }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+
+    .feature-card {
+      padding: 38px 32px;
+      opacity: 0;
+      transition: border-color 0.28s, box-shadow 0.28s;
+      cursor: default;
+    }
+    .feature-card:hover {
+      border-color: rgba(99,102,241,0.38);
+      box-shadow: 0 0 48px rgba(99,102,241,0.09);
+    }
+
+    .f-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.45rem;
+      margin-bottom: 26px;
+    }
+    .f-icon-1 { background: rgba(99,102,241,0.14); border: 1px solid rgba(99,102,241,0.28); }
+    .f-icon-2 { background: rgba(236,72,153,0.14); border: 1px solid rgba(236,72,153,0.28); }
+    .f-icon-3 { background: rgba(16,185,129,0.14); border: 1px solid rgba(16,185,129,0.28); }
+
+    .f-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.17rem; font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .f-desc {
+      font-size: 0.9rem; color: var(--text-muted);
+      line-height: 1.72; margin-bottom: 26px;
+    }
+
+    .ftag {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.72rem; font-weight: 700;
+      padding: 4px 10px; border-radius: 6px;
+    }
+    .ftag-i { background: rgba(99,102,241,0.14); color: #818CF8; }
+    .ftag-p { background: rgba(236,72,153,0.14); color: #F472B6; }
+    .ftag-g { background: rgba(16,185,129,0.14); color: #34D399; }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .pricing-card {
+      padding: 38px 30px;
+      display: flex; flex-direction: column;
+      position: relative;
+      opacity: 0;
+      transition: border-color 0.28s, box-shadow 0.28s;
+    }
+    .pricing-card:hover { box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+
+    .pricing-card.featured {
+      border-color: rgba(99,102,241,0.55);
+      background: rgba(99,102,241,0.07);
+      box-shadow: 0 0 64px rgba(99,102,241,0.18), 0 0 0 1px rgba(99,102,241,0.25);
+    }
+
+    .popular {
+      position: absolute;
+      top: -15px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, #6366F1, #8B5CF6);
+      color: #fff;
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 5px 14px; border-radius: 100px;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(99,102,241,0.42);
+    }
+
+    .plan-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.78rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .plan-price {
+      display: flex; align-items: flex-end; gap: 3px;
+      margin-bottom: 4px; line-height: 1;
+    }
+    .price-sym {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.6rem; font-weight: 600;
+      margin-bottom: 5px;
+    }
+    .price-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 3.2rem; font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+    .price-per {
+      font-size: 0.82rem; color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    .plan-desc {
+      font-size: 0.86rem; color: var(--text-muted);
+      line-height: 1.65; margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .plan-features {
+      list-style: none;
+      display: flex; flex-direction: column; gap: 11px;
+      margin-bottom: 28px; flex: 1;
+    }
+    .pf {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 0.86rem; color: var(--text-muted);
+    }
+    .pf-check {
+      width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px;
+      border-radius: 50%;
+      background: rgba(99,102,241,0.14);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.62rem; color: #818CF8;
+    }
+    .pricing-card.featured .pf-check {
+      background: rgba(99,102,241,0.28); color: #a5b4fc;
+    }
+
+    .pricing-card .btn { width: 100%; justify-content: center; }
+
+    #cta { padding-bottom: 130px; }
+
+    .cta-box {
+      padding: 80px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-glow {
+      position: absolute;
+      width: 560px; height: 320px;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.28) 0%, transparent 70%);
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+
+    .cta-content { position: relative; z-index: 1; opacity: 0; }
+
+    .cta-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.1rem, 4.5vw, 3.2rem);
+      font-weight: 700;
+      letter-spacing: -0.03em; line-height: 1.1;
+      margin-bottom: 18px;
+    }
+
+    .cta-sub {
+      font-size: 1rem; color: var(--text-muted);
+      max-width: 460px; margin: 0 auto 38px;
+      line-height: 1.72;
+    }
+
+    .cta-note {
+      font-size: 0.78rem; color: var(--text-dim); margin-top: 14px;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 36px 0;
+    }
+
+    .footer-inner {
+      display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 16px;
+    }
+
+    .footer-copy { font-size: 0.82rem; color: var(--text-dim); }
+
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a {
+      font-size: 0.82rem; color: var(--text-dim);
+      text-decoration: none; transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text-muted); }
+
+    .icon-arrow { display: inline; }
+
+    @media (max-width: 900px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .pricing-grid  { grid-template-columns: 1fr; }
+      .nav-links     { display: none; }
+      .cta-box       { padding: 52px 30px; }
+      .footer-inner  { flex-direction: column; text-align: center; }
+    }
+    @media (min-width: 600px) and (max-width: 900px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="aurora" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+    <div class="noise"></div>
+  </div>
+
+  <div class="page">
+
+    <nav>
+      <div class="container">
+        <div class="nav-inner">
+          <a href="#" class="logo">
+            <span class="logo-mark">⚡</span>
+            Twist
+          </a>
+          <ul class="nav-links">
+            <li><a href="#features">Fonctionnalités</a></li>
+            <li><a href="#pricing">Tarifs</a></li>
+            <li><a href="#cta">Contact</a></li>
+          </ul>
+          <a href="#" class="btn btn-primary">Essayer gratuitement</a>
+        </div>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="container">
+        <div class="hero-inner">
+          <div class="hero-badge">
+            <span class="pulse"></span>
+            v2.0 — IA générative intégrée
+          </div>
+          <h1 class="hero-h1">
+            Closez plus vite.<br />
+            <span class="grad">Convertissez mieux.</span>
+          </h1>
+          <p class="hero-sub">
+            Twist centralise vos deals, automatise vos relances et vous donne les insights en temps réel pour transformer chaque opportunité en contrat signé.
+          </p>
+          <div class="hero-ctas">
+            <a href="#" class="btn btn-primary btn-lg">
+              Démarrer gratuitement
+              <svg class="icon-arrow" width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <path d="M2.5 7.5h10M9 4l3.5 3.5L9 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+            <a href="#" class="btn btn-ghost btn-lg">
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <path d="M5.5 3.5l6 4-6 4V3.5z" fill="currentColor"/>
+              </svg>
+              Voir la démo
+            </a>
+          </div>
+          <div class="hero-proof">
+            <div class="avatars">
+              <div class="av av-1">JD</div>
+              <div class="av av-2">ML</div>
+              <div class="av av-3">AS</div>
+              <div class="av av-4">KP</div>
+              <div class="av av-5">TR</div>
+            </div>
+            <div>
+              <span class="stars">★★★★★</span>
+              <span class="proof-text">Rejoint par <strong>1 200+</strong> équipes commerciales</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">Fonctionnalités</span>
+          <h2 class="section-title">Tout ce dont vous avez besoin<br />pour closer.</h2>
+          <p class="section-sub">Des outils IA conçus pour les équipes commerciales qui veulent aller plus vite, sans sacrifier la qualité.</p>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card glass">
+            <div class="f-icon f-icon-1">⚡</div>
+            <h3 class="f-title">Relances Intelligentes</h3>
+            <p class="f-desc">L'IA rédige vos séquences de relance personnalisées, adaptées à chaque prospect et à chaque stade du pipeline. Zéro copier-coller, 3× plus de réponses.</p>
+            <span class="ftag ftag-i">❆ Alimenté par l'IA</span>
+          </div>
+          <div class="feature-card glass">
+            <div class="f-icon f-icon-2">📊</div>
+            <h3 class="f-title">Deal Intelligence</h3>
+            <p class="f-desc">Visualisez en temps réel la santé de chaque deal. Détectez les signaux d'alerte et intervenez avant qu'il soit trop tard pour sauver l'opportunité.</p>
+            <span class="ftag ftag-p">❆ Temps réel</span>
+          </div>
+          <div class="feature-card glass">
+            <div class="f-icon f-icon-3">🎯</div>
+            <h3 class="f-title">Objection Handler</h3>
+            <p class="f-desc">Accédez instantanément aux meilleures réponses aux objections les plus courantes. Entraînez votre équipe avec des playbooks éprouvés.</p>
+            <span class="ftag ftag-g">❆ Playbooks inclus</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label">Tarifs</span>
+          <h2 class="section-title">Simple. Transparent.<br />Sans surprise.</h2>
+          <p class="section-sub">Commencez gratuitement, montez en puissance selon vos besoins. Annulez à tout moment.</p>
+        </div>
+        <div class="pricing-grid">
+          <div class="pricing-card glass">
+            <p class="plan-name">Starter</p>
+            <div class="plan-price"><span class="price-sym">€</span><span class="price-num">49</span></div>
+            <p class="price-per">/ mois · par utilisateur</p>
+            <p class="plan-desc">Idéal pour les solos et les petites équipes qui démarrent leur activité commerciale.</p>
+            <ul class="plan-features">
+              <li class="pf"><span class="pf-check">✓</span>1 utilisateur inclus</li>
+              <li class="pf"><span class="pf-check">✓</span>50 deals actifs</li>
+              <li class="pf"><span class="pf-check">✓</span>Relances basiques</li>
+              <li class="pf"><span class="pf-check">✓</span>Analytics standard</li>
+              <li class="pf"><span class="pf-check">✓</span>Support email</li>
+            </ul>
+            <a href="#" class="btn btn-ghost">Commencer gratuitement</a>
+          </div>
+          <div class="pricing-card glass featured">
+            <span class="popular">⭐ Le plus populaire</span>
+            <p class="plan-name">Pro</p>
+            <div class="plan-price"><span class="price-sym">€</span><span class="price-num">149</span></div>
+            <p class="price-per">/ mois · jusqu'à 5 utilisateurs</p>
+            <p class="plan-desc">Pour les équipes commerciales qui veulent passer la vitesse supérieure avec l'IA.</p>
+            <ul class="plan-features">
+              <li class="pf"><span class="pf-check">✓</span>5 utilisateurs inclus</li>
+              <li class="pf"><span class="pf-check">✓</span>Deals illimités</li>
+              <li class="pf"><span class="pf-check">✓</span>IA complète (relances + objections)</li>
+              <li class="pf"><span class="pf-check">✓</span>Deal Intelligence avancé</li>
+              <li class="pf"><span class="pf-check">✓</span>Intégrations CRM (HubSpot, Salesforce)</li>
+              <li class="pf"><span class="pf-check">✓</span>Support prioritaire</li>
+            </ul>
+            <a href="#" class="btn btn-primary">Démarrer avec Pro</a>
+          </div>
+          <div class="pricing-card glass">
+            <p class="plan-name">Business</p>
+            <div class="plan-price"><span class="price-sym">€</span><span class="price-num">399</span></div>
+            <p class="price-per">/ mois · utilisateurs illimités</p>
+            <p class="plan-desc">Pour les grandes équipes avec des besoins spécifiques et une ambition sans limite.</p>
+            <ul class="plan-features">
+              <li class="pf"><span class="pf-check">✓</span>Utilisateurs illimités</li>
+              <li class="pf"><span class="pf-check">✓</span>Toutes les fonctionnalités Pro</li>
+              <li class="pf"><span class="pf-check">✓</span>API + intégrations custom</li>
+              <li class="pf"><span class="pf-check">✓</span>Onboarding dédié</li>
+              <li class="pf"><span class="pf-check">✓</span>CSM dédié</li>
+              <li class="pf"><span class="pf-check">✓</span>SLA 99,9% garanti</li>
+            </ul>
+            <a href="#" class="btn btn-ghost">Nous contacter</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="cta">
+      <div class="container">
+        <div class="cta-box glass">
+          <div class="cta-glow"></div>
+          <div class="cta-content">
+            <span class="section-label">Prêt à passer à l'action ?</span>
+            <h2 class="cta-title">Transformez vos leads<br /><span class="grad">en contrats signés.</span></h2>
+            <p class="cta-sub">Rejoignez les 1 200+ équipes commerciales qui font confiance à Twist pour accélérer leur closing et atteindre leurs objectifs chaque mois.</p>
+            <a href="#" class="btn btn-primary btn-lg">
+              Démarrer l'essai gratuit — 14 jours
+              <svg class="icon-arrow" width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <path d="M2.5 7.5h10M9 4l3.5 3.5L9 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+            <p class="cta-note">Aucune carte bancaire requise · Annulation à tout moment</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="container">
+        <div class="footer-inner">
+          <a href="#" class="logo">
+            <span class="logo-mark" style="width:28px;height:28px;font-size:0.85rem;border-radius:8px;">⚡</span>
+            Twist
+          </a>
+          <p class="footer-copy">© 2025 Twist SaaS. Tous droits réservés.</p>
+          <div class="footer-links">
+            <a href="#">Mentions légales</a>
+            <a href="#">Confidentialité</a>
+            <a href="#">Contact</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <script type="module">
+    import { animate, inView, stagger } from "https://esm.sh/framer-motion@11";
+    const ease = [0.22, 1, 0.36, 1];
+    animate(".hero-badge",   { opacity: [0,1], y: [22,0] }, { duration: 0.6,  delay: 0.15, ease });
+    animate(".hero-h1",      { opacity: [0,1], y: [38,0] }, { duration: 0.75, delay: 0.30, ease });
+    animate(".hero-sub",     { opacity: [0,1], y: [24,0] }, { duration: 0.65, delay: 0.50, ease });
+    animate(".hero-ctas",    { opacity: [0,1], y: [20,0] }, { duration: 0.60, delay: 0.65, ease });
+    animate(".hero-proof",   { opacity: [0,1], y: [16,0] }, { duration: 0.60, delay: 0.80, ease });
+    document.querySelectorAll(".section-header").forEach(el => {
+      inView(el, () => { animate(el, { opacity: [0,1], y: [26,0] }, { duration: 0.7, ease }); }, { margin: "0px 0px -60px 0px" });
+    });
+    inView(".features-grid", () => {
+      animate(".feature-card", { opacity: [0,1], y: [52,0], scale: [0.96,1] }, { duration: 0.65, delay: stagger(0.14), ease });
+    }, { margin: "0px 0px -80px 0px" });
+    inView(".pricing-grid", () => {
+      animate(".pricing-card", { opacity: [0,1], y: [52,0], scale: [0.96,1] }, { duration: 0.65, delay: stagger(0.13), ease });
+    }, { margin: "0px 0px -80px 0px" });
+    inView(".cta-content", () => {
+      animate(".cta-content", { opacity: [0,1], y: [34,0] }, { duration: 0.8, ease });
+    }, { margin: "0px 0px -60px 0px" });
+    document.querySelectorAll(".feature-card, .pricing-card").forEach(card => {
+      card.addEventListener("mouseenter", () => animate(card, { y: -6 }, { duration: 0.32, ease }));
+      card.addEventListener("mouseleave", () => animate(card, { y: 0 }, { duration: 0.28, ease }));
+    });
+    document.querySelectorAll(".btn").forEach(btn => {
+      btn.addEventListener("mousedown",  () => animate(btn, { scale: 0.955 }, { duration: 0.1 }));
+      btn.addEventListener("mouseup",    () => animate(btn, { scale: 1 }, { duration: 0.22, ease }));
+      btn.addEventListener("mouseleave", () => animate(btn, { scale: 1 }, { duration: 0.22, ease }));
+    });
+  </script>
+
+</body>
+</html>
