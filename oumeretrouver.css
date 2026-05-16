@@ -4,6 +4,41 @@
    Placer ce fichier dans : wp-content/themes/salient-child/
    ============================================================ */
 
+/* ──────────────────────────────────────────────────────────
+   COMPATIBILITÉ WPBAKERY
+   Neutralise les paddings/marges des rows et colonnes WPBakery
+   dans le template "Où me retrouver" pour que chaque shortcode
+   contrôle son propre espacement.
+   Utiliser des rows en mode "Stretch row + no padding" dans WPBakery.
+   ────────────────────────────────────────────────────────── */
+.oumr-page .vc_row,
+.oumr-page .vc_row-fluid {
+  margin-left:  0 !important;
+  margin-right: 0 !important;
+  padding-left:  0 !important;
+  padding-right: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+.oumr-page .vc_column_container > .vc_column-inner,
+.oumr-page .wpb_column.vc_column_container > .vc_column-inner {
+  padding-top:    0 !important;
+  padding-bottom: 0 !important;
+  padding-left:   0 !important;
+  padding-right:  0 !important;
+}
+/* Salient : supprimer le padding du #main-content sur ce template */
+.oumr-template #main-content,
+.oumr-template .container {
+  padding: 0 !important;
+  max-width: none !important;
+}
+/* Masquer le header de page Salient (titre + breadcrumb auto) si actif */
+.oumr-template #page-header-bg,
+.oumr-template .page-header-title-container {
+  display: none !important;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Lato:wght@300;400;700&display=swap');
 
 /* ---- Variables ---- */
