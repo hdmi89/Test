@@ -140,7 +140,14 @@ add_action('save_post', function ($id) {
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
     if (!current_user_can('edit_post', $id)) return;
 
-    if (isset($_POST['a2j_event_nonce']) && wp_verify_nonce($_POST['a2j_event_nonce'], 'a2j_event_save')) {
+    // FIX : vérifier le post_type avant de sauvegarder pour éviter
+    // qu'un nonce valide sur un autre formulaire écrive dans le mauvais post.
+    $post_type = get_post_type($id);
+
+    if ($post_type === 'oumr_event'
+        && isset($_POST['a2j_event_nonce'])
+        && wp_verify_nonce($_POST['a2j_event_nonce'], 'a2j_event_save')
+    ) {
         foreach (['oumr_jour_num','oumr_mois_court','oumr_date_debut','oumr_date_fin',
                   'oumr_horaires','oumr_lieu','oumr_adresse','oumr_type_tag','oumr_tag_label','oumr_lat','oumr_lng'] as $f) {
             if (isset($_POST[$f])) update_post_meta($id, $f, sanitize_text_field($_POST[$f]));
@@ -150,7 +157,10 @@ add_action('save_post', function ($id) {
         update_post_meta($id, 'oumr_is_past',     isset($_POST['oumr_is_past'])     ? '1' : '');
     }
 
-    if (isset($_POST['a2j_shop_nonce']) && wp_verify_nonce($_POST['a2j_shop_nonce'], 'a2j_shop_save')) {
+    if ($post_type === 'oumr_shop'
+        && isset($_POST['a2j_shop_nonce'])
+        && wp_verify_nonce($_POST['a2j_shop_nonce'], 'a2j_shop_save')
+    ) {
         foreach (['oumr_ville','oumr_cp','oumr_horaires','oumr_lat','oumr_lng'] as $f) {
             if (isset($_POST[$f])) update_post_meta($id, $f, sanitize_text_field($_POST[$f]));
         }
@@ -185,7 +195,7 @@ add_shortcode('oumr_hero', function ($atts) {
 
     ob_start(); ?>
     <section class="oumr-hero">
-      <span class="oumr-section-label"><?php echo wp_kses_post($a['label']); ?></span>
+      <span class="oumr-section-label"><?php echo esc_html($a['label']); ?></span>
       <h1 class="oumr-hero__title"><?php echo $title_html; ?></h1>
       <?php if ($a['lead']): ?><p class="oumr-hero__lead"><?php echo esc_html($a['lead']); ?></p><?php endif; ?>
       <div class="oumr-chips"><?php echo $chips_html; ?></div>
@@ -199,6 +209,9 @@ add_shortcode('oumr_featured_event', function ($atts) {
 
     if ($a['id']) {
         $event = get_post(intval($a['id']));
+        // FIX : s'assurer que l'ID fourni pointe bien sur notre CPT,
+        // pas sur un article privé ou un autre type de contenu.
+        if (!$event || $event->post_type !== 'oumr_event') return '';
     } else {
         $r = get_posts(['post_type' => 'oumr_event', 'posts_per_page' => 1,
                         'meta_query' => [['key' => 'oumr_is_featured', 'value' => '1']]]);
@@ -404,7 +417,9 @@ add_shortcode('oumr_map', function ($atts) {
             'popup' => '<strong>' . esc_html($sh->post_title) . '</strong><br>' . esc_html(get_post_meta($sh->ID,'oumr_horaires',true))];
     }
 
-    $json = wp_json_encode($markers);
+    // FIX : JSON_HEX_TAG échappe < et > en </>,
+    // garantit qu'un titre contenant </script> ne peut pas fermer la balise.
+    $json = wp_json_encode($markers, JSON_HEX_TAG | JSON_HEX_AMP);
     ob_start(); ?>
     <section class="oumr-map-section">
       <div class="oumr-map-section__inner">
