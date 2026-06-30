@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Todo App</title>
+  <title>Gestion du parc machine - Location</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -11,67 +11,138 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #f0f2f5;
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      padding: 48px 16px;
+      padding: 32px 16px 64px;
     }
 
     .container {
       width: 100%;
-      max-width: 560px;
+      max-width: 1100px;
+      margin: 0 auto;
     }
 
     h1 {
-      font-size: 2rem;
+      font-size: 1.9rem;
       font-weight: 700;
       color: #1a1a2e;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
 
     .subtitle {
       color: #6b7280;
-      margin-bottom: 32px;
+      margin-bottom: 28px;
       font-size: 0.95rem;
     }
 
-    .add-form {
-      display: flex;
-      gap: 8px;
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      padding: 20px 24px;
       margin-bottom: 24px;
     }
 
-    .add-form input {
-      flex: 1;
-      padding: 12px 16px;
+    .card h2 {
+      font-size: 1.1rem;
+      color: #1a1a2e;
+      margin-bottom: 16px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    .field label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #4b5563;
+    }
+
+    .field input[type="text"],
+    .field input[type="date"],
+    .field select {
+      padding: 10px 12px;
       border: 2px solid #e5e7eb;
-      border-radius: 10px;
-      font-size: 1rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
       outline: none;
       transition: border-color 0.2s;
       background: #fff;
+      font-family: inherit;
     }
 
-    .add-form input:focus { border-color: #6366f1; }
+    .field input:focus, .field select:focus { border-color: #6366f1; }
 
-    .add-form button {
-      padding: 12px 20px;
+    .checks {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      padding-top: 4px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: #374151;
+    }
+
+    .check-item input { width: 18px; height: 18px; accent-color: #6366f1; cursor: pointer; }
+
+    .form-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      padding: 11px 22px;
       background: #6366f1;
       color: #fff;
       border: none;
-      border-radius: 10px;
-      font-size: 1rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
       font-weight: 600;
-      cursor: pointer;
       transition: background 0.2s;
-      white-space: nowrap;
     }
 
-    .add-form button:hover { background: #4f46e5; }
+    .btn-primary:hover { background: #4f46e5; }
+
+    .btn-secondary {
+      padding: 11px 18px;
+      background: #fff;
+      color: #6b7280;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .btn-secondary:hover { background: #f3f4f6; }
+
+    .error-msg {
+      grid-column: 1 / -1;
+      color: #dc2626;
+      font-size: 0.85rem;
+      display: none;
+    }
 
     .filters {
       display: flex;
       gap: 8px;
       margin-bottom: 16px;
+      flex-wrap: wrap;
     }
 
     .filter-btn {
@@ -80,9 +151,8 @@
       border-radius: 20px;
       background: #fff;
       color: #6b7280;
-      font-size: 0.875rem;
+      font-size: 0.85rem;
       font-weight: 500;
-      cursor: pointer;
       transition: all 0.2s;
     }
 
@@ -92,59 +162,105 @@
       color: #fff;
     }
 
-    .todo-list {
+    .location-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
 
-    .todo-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 16px;
+    .location-item {
       background: #fff;
-      border-radius: 10px;
+      border-radius: 12px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      padding: 16px 20px;
       transition: box-shadow 0.2s;
     }
 
-    .todo-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .todo-item.completed { opacity: 0.6; }
+    .location-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
-    .todo-checkbox {
-      width: 20px;
-      height: 20px;
-      accent-color: #6366f1;
-      cursor: pointer;
-      flex-shrink: 0;
+    .location-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
     }
 
-    .todo-title {
-      flex: 1;
-      font-size: 1rem;
-      color: #111827;
-      word-break: break-word;
+    .location-title { font-size: 1.05rem; font-weight: 700; color: #111827; }
+    .location-client { font-size: 0.85rem; color: #6b7280; margin-top: 2px; }
+
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      white-space: nowrap;
+      height: fit-content;
     }
 
-    .todo-item.completed .todo-title {
-      text-decoration: line-through;
+    .status-a_venir { background: #e0e7ff; color: #4338ca; }
+    .status-en_cours { background: #d1fae5; color: #065f46; }
+    .status-terminee { background: #f3f4f6; color: #6b7280; }
+
+    .location-dates {
+      font-size: 0.88rem;
+      color: #374151;
+      margin-bottom: 12px;
+    }
+
+    .location-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      align-items: center;
+      padding-top: 10px;
+      border-top: 1px solid #f3f4f6;
+    }
+
+    .toggle-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 2px solid #e5e7eb;
       color: #9ca3af;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: #fff;
     }
 
-    .delete-btn {
+    .toggle-badge.ok {
+      border-color: #34d399;
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    .delivery-badge {
+      font-size: 0.82rem;
+      padding: 5px 10px;
+      border-radius: 8px;
+      background: #fef3c7;
+      color: #92400e;
+      font-weight: 600;
+    }
+
+    .spacer { flex: 1; }
+
+    .icon-btn {
       background: none;
       border: none;
-      cursor: pointer;
-      color: #d1d5db;
-      font-size: 1.2rem;
-      padding: 2px 6px;
+      color: #9ca3af;
+      font-size: 1rem;
+      padding: 4px 8px;
       border-radius: 6px;
       transition: color 0.2s, background 0.2s;
-      flex-shrink: 0;
     }
 
-    .delete-btn:hover { color: #ef4444; background: #fee2e2; }
+    .icon-btn:hover { color: #6366f1; background: #eef2ff; }
+    .icon-btn.delete:hover { color: #ef4444; background: #fee2e2; }
 
     .empty-state {
       text-align: center;
@@ -154,108 +270,210 @@
 
     .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
 
-    .stats {
-      margin-top: 20px;
+    .notes-text {
       font-size: 0.85rem;
-      color: #9ca3af;
-      text-align: center;
+      color: #6b7280;
+      margin-top: 8px;
+      font-style: italic;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📝 Todo App</h1>
-    <p class="subtitle">Gérez vos tâches simplement.</p>
+    <h1>🚜 Gestion du parc machine</h1>
+    <p class="subtitle">Suivi interne des locations de machines.</p>
 
-    <form class="add-form" id="addForm">
-      <input type="text" id="newTodo" placeholder="Nouvelle tâche..." autocomplete="off" />
-      <button type="submit">Ajouter</button>
-    </form>
+    <div class="card">
+      <h2 id="formTitle">Nouvelle location</h2>
+      <form class="form-grid" id="locationForm">
+        <div class="field">
+          <label for="machine">Machine *</label>
+          <input type="text" id="machine" placeholder="Ex: Mini-pelle 3T" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="client">Client</label>
+          <input type="text" id="client" placeholder="Nom du client" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="dateDebut">Date de début *</label>
+          <input type="date" id="dateDebut" />
+        </div>
+        <div class="field">
+          <label for="dateFin">Date de fin *</label>
+          <input type="date" id="dateFin" />
+        </div>
+        <div class="field">
+          <label for="livraison">Livraison</label>
+          <select id="livraison">
+            <option value="retrait_site">Retrait sur site</option>
+            <option value="transporteur">Transporteur</option>
+            <option value="gresiloc">Livraison par Gresiloc</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="notes">Notes</label>
+          <input type="text" id="notes" placeholder="Notes (optionnel)" autocomplete="off" />
+        </div>
+
+        <div class="checks">
+          <label class="check-item"><input type="checkbox" id="reglementRecu" /> Règlement reçu</label>
+          <label class="check-item"><input type="checkbox" id="cautionOk" /> Caution ok</label>
+          <label class="check-item"><input type="checkbox" id="assuranceOk" /> Assurance ok</label>
+        </div>
+
+        <p class="error-msg" id="errorMsg"></p>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="submitBtn">Ajouter</button>
+          <button type="button" class="btn-secondary" id="cancelBtn" style="display:none;">Annuler</button>
+        </div>
+      </form>
+    </div>
 
     <div class="filters">
       <button class="filter-btn active" data-filter="all">Toutes</button>
-      <button class="filter-btn" data-filter="active">En cours</button>
-      <button class="filter-btn" data-filter="completed">Terminées</button>
+      <button class="filter-btn" data-filter="a_venir">À venir</button>
+      <button class="filter-btn" data-filter="en_cours">En cours</button>
+      <button class="filter-btn" data-filter="terminee">Terminées</button>
     </div>
 
-    <div class="todo-list" id="todoList"></div>
-    <p class="stats" id="stats"></p>
+    <div class="location-list" id="locationList"></div>
   </div>
 
   <script>
-    const STORAGE_KEY = 'todos';
+    const API = '/api/locations';
+    let locations = [];
     let filter = 'all';
+    let editingId = null;
 
-    function loadTodos() {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const DELIVERY_LABELS = {
+      retrait_site: '📍 Retrait sur site',
+      transporteur: '🚚 Transporteur',
+      gresiloc: '🚛 Livraison par Gresiloc',
+    };
+
+    const form = document.getElementById('locationForm');
+    const errorMsg = document.getElementById('errorMsg');
+    const submitBtn = document.getElementById('submitBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const formTitle = document.getElementById('formTitle');
+
+    function todayStr() {
+      return new Date().toISOString().slice(0, 10);
     }
 
-    function saveTodos(todos) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+    function computeStatus(loc) {
+      const today = todayStr();
+      if (loc.date_fin < today) return 'terminee';
+      if (loc.date_debut > today) return 'a_venir';
+      return 'en_cours';
     }
 
-    function addTodo(title) {
-      const todos = loadTodos();
-      todos.push({ id: crypto.randomUUID(), title, completed: false });
-      saveTodos(todos);
-      render();
-    }
+    const STATUS_LABELS = {
+      a_venir: 'À venir',
+      en_cours: 'En cours',
+      terminee: 'Terminée',
+    };
 
-    function toggleTodo(id) {
-      const todos = loadTodos().map(t =>
-        t.id === id ? { ...t, completed: !t.completed } : t
-      );
-      saveTodos(todos);
-      render();
-    }
-
-    function deleteTodo(id) {
-      saveTodos(loadTodos().filter(t => t.id !== id));
-      render();
+    function formatDate(d) {
+      if (!d) return '';
+      const [y, m, day] = d.split('-');
+      return `${day}/${m}/${y}`;
     }
 
     function escapeHtml(str) {
-      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
-    function render() {
-      const todos = loadTodos();
-      const list = document.getElementById('todoList');
-      const stats = document.getElementById('stats');
+    async function fetchLocations() {
+      const res = await fetch(API);
+      locations = await res.json();
+      render();
+    }
 
-      const visible = todos.filter(t => {
-        if (filter === 'active') return !t.completed;
-        if (filter === 'completed') return t.completed;
-        return true;
+    function resetForm() {
+      form.reset();
+      editingId = null;
+      submitBtn.textContent = 'Ajouter';
+      formTitle.textContent = 'Nouvelle location';
+      cancelBtn.style.display = 'none';
+      errorMsg.style.display = 'none';
+    }
+
+    function fillForm(loc) {
+      document.getElementById('machine').value = loc.machine;
+      document.getElementById('client').value = loc.client;
+      document.getElementById('dateDebut').value = loc.date_debut;
+      document.getElementById('dateFin').value = loc.date_fin;
+      document.getElementById('livraison').value = loc.livraison;
+      document.getElementById('notes').value = loc.notes;
+      document.getElementById('reglementRecu').checked = loc.reglement_recu;
+      document.getElementById('cautionOk').checked = loc.caution_ok;
+      document.getElementById('assuranceOk').checked = loc.assurance_ok;
+      editingId = loc.id;
+      submitBtn.textContent = 'Mettre à jour';
+      formTitle.textContent = 'Modifier la location';
+      cancelBtn.style.display = 'inline-block';
+      errorMsg.style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function startEdit(id) {
+      const loc = locations.find(l => l.id === id);
+      if (loc) fillForm(loc);
+    }
+
+    async function deleteLocation(id) {
+      if (!confirm('Supprimer cette location ?')) return;
+      await fetch(`${API}/${id}`, { method: 'DELETE' });
+      if (editingId === id) resetForm();
+      await fetchLocations();
+    }
+
+    async function togglePatch(id, field, current) {
+      await fetch(`${API}/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: !current }),
+      });
+      await fetchLocations();
+    }
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const payload = {
+        machine: document.getElementById('machine').value.trim(),
+        client: document.getElementById('client').value.trim(),
+        date_debut: document.getElementById('dateDebut').value,
+        date_fin: document.getElementById('dateFin').value,
+        livraison: document.getElementById('livraison').value,
+        notes: document.getElementById('notes').value.trim(),
+        reglement_recu: document.getElementById('reglementRecu').checked,
+        caution_ok: document.getElementById('cautionOk').checked,
+        assurance_ok: document.getElementById('assuranceOk').checked,
+      };
+
+      const url = editingId ? `${API}/${editingId}` : API;
+      const method = editingId ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
-      if (visible.length === 0) {
-        list.innerHTML = `
-          <div class="empty-state">
-            <div class="icon">✅</div>
-            <p>Aucune tâche à afficher.</p>
-          </div>`;
-      } else {
-        list.innerHTML = visible.map(todo => `
-          <div class="todo-item ${todo.completed ? 'completed' : ''}">
-            <input class="todo-checkbox" type="checkbox" ${todo.completed ? 'checked' : ''}
-              onchange="toggleTodo('${todo.id}')" />
-            <span class="todo-title">${escapeHtml(todo.title)}</span>
-            <button class="delete-btn" onclick="deleteTodo('${todo.id}')" title="Supprimer">✕</button>
-          </div>
-        `).join('');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        errorMsg.textContent = data.error || 'Une erreur est survenue.';
+        errorMsg.style.display = 'block';
+        return;
       }
 
-      const done = todos.filter(t => t.completed).length;
-      stats.textContent = `${done} / ${todos.length} tâche(s) terminée(s)`;
-    }
-
-    document.getElementById('addForm').addEventListener('submit', e => {
-      e.preventDefault();
-      const input = document.getElementById('newTodo');
-      const title = input.value.trim();
-      if (title) { input.value = ''; addTodo(title); }
+      resetForm();
+      await fetchLocations();
     });
+
+    cancelBtn.addEventListener('click', resetForm);
 
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -266,7 +484,52 @@
       });
     });
 
-    render();
+    function render() {
+      const list = document.getElementById('locationList');
+
+      const withStatus = locations.map(l => ({ ...l, status: computeStatus(l) }));
+      const visible = withStatus.filter(l => filter === 'all' || l.status === filter);
+
+      if (visible.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">🛠️</div>
+            <p>Aucune location à afficher.</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = visible.map(loc => `
+        <div class="location-item">
+          <div class="location-top">
+            <div>
+              <div class="location-title">${escapeHtml(loc.machine)}</div>
+              ${loc.client ? `<div class="location-client">👤 ${escapeHtml(loc.client)}</div>` : ''}
+            </div>
+            <span class="status-badge status-${loc.status}">${STATUS_LABELS[loc.status]}</span>
+          </div>
+          <div class="location-dates">📅 ${formatDate(loc.date_debut)} → ${formatDate(loc.date_fin)}</div>
+          <div class="location-meta">
+            <span class="toggle-badge ${loc.reglement_recu ? 'ok' : ''}" onclick="togglePatch('${loc.id}', 'reglement_recu', ${loc.reglement_recu})">
+              ${loc.reglement_recu ? '✅' : '⬜'} Règlement reçu
+            </span>
+            <span class="toggle-badge ${loc.caution_ok ? 'ok' : ''}" onclick="togglePatch('${loc.id}', 'caution_ok', ${loc.caution_ok})">
+              ${loc.caution_ok ? '✅' : '⬜'} Caution ok
+            </span>
+            <span class="toggle-badge ${loc.assurance_ok ? 'ok' : ''}" onclick="togglePatch('${loc.id}', 'assurance_ok', ${loc.assurance_ok})">
+              ${loc.assurance_ok ? '✅' : '⬜'} Assurance ok
+            </span>
+            <span class="delivery-badge">${DELIVERY_LABELS[loc.livraison] || loc.livraison}</span>
+            <span class="spacer"></span>
+            <button class="icon-btn" onclick="startEdit('${loc.id}')" title="Modifier">✏️</button>
+            <button class="icon-btn delete" onclick="deleteLocation('${loc.id}')" title="Supprimer">✕</button>
+          </div>
+          ${loc.notes ? `<div class="notes-text">${escapeHtml(loc.notes)}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    fetchLocations();
   </script>
 </body>
 </html>
