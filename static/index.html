@@ -29,9 +29,35 @@
 
     .subtitle {
       color: #6b7280;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
       font-size: 0.95rem;
     }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      background: none;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #6b7280;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .tab-btn:hover { color: #4338ca; }
+    .tab-btn.active { color: #6366f1; border-color: #6366f1; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
     .card {
       background: #fff;
@@ -62,6 +88,7 @@
     }
 
     .field input[type="text"],
+    .field input[type="number"],
     .field input[type="date"],
     .field select {
       padding: 10px 12px;
@@ -162,13 +189,13 @@
       color: #fff;
     }
 
-    .location-list {
+    .location-list, .machine-list {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
-    .location-item {
+    .location-item, .machine-item {
       background: #fff;
       border-radius: 12px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.06);
@@ -176,9 +203,9 @@
       transition: box-shadow 0.2s;
     }
 
-    .location-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .location-item:hover, .machine-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
-    .location-top {
+    .location-top, .machine-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
@@ -187,8 +214,8 @@
       margin-bottom: 10px;
     }
 
-    .location-title { font-size: 1.05rem; font-weight: 700; color: #111827; }
-    .location-client { font-size: 0.85rem; color: #6b7280; margin-top: 2px; }
+    .location-title, .machine-title { font-size: 1.05rem; font-weight: 700; color: #111827; }
+    .location-client, .machine-serial { font-size: 0.85rem; color: #6b7280; margin-top: 2px; }
 
     .status-badge {
       padding: 4px 12px;
@@ -203,10 +230,15 @@
     .status-en_cours { background: #d1fae5; color: #065f46; }
     .status-terminee { background: #f3f4f6; color: #6b7280; }
 
-    .location-dates {
+    .status-disponible { background: #d1fae5; color: #065f46; }
+    .status-preparation { background: #e0e7ff; color: #4338ca; }
+    .status-vidange { background: #fef3c7; color: #92400e; }
+    .status-indisponible { background: #fee2e2; color: #b91c1c; }
+
+    .location-dates, .location-compteur {
       font-size: 0.88rem;
       color: #374151;
-      margin-bottom: 12px;
+      margin-bottom: 6px;
     }
 
     .location-meta {
@@ -215,6 +247,7 @@
       gap: 8px 18px;
       align-items: center;
       padding-top: 10px;
+      margin-top: 6px;
       border-top: 1px solid #f3f4f6;
     }
 
@@ -247,6 +280,23 @@
       font-weight: 600;
     }
 
+    .status-select {
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 2px solid #e5e7eb;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      background: #fff;
+      color: #374151;
+    }
+
+    select.status-select.status-disponible { background: #d1fae5; color: #065f46; border-color: #34d399; }
+    select.status-select.status-preparation { background: #e0e7ff; color: #4338ca; border-color: #818cf8; }
+    select.status-select.status-vidange { background: #fef3c7; color: #92400e; border-color: #fbbf24; }
+    select.status-select.status-indisponible { background: #fee2e2; color: #b91c1c; border-color: #f87171; }
+
     .spacer { flex: 1; }
 
     .icon-btn {
@@ -276,75 +326,140 @@
       margin-top: 8px;
       font-style: italic;
     }
+
+    .hint {
+      font-size: 0.82rem;
+      color: #9ca3af;
+      margin-top: -4px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🚜 Gestion du parc machine</h1>
-    <p class="subtitle">Suivi interne des locations de machines.</p>
+    <p class="subtitle">Suivi interne du parc et des locations de machines.</p>
 
-    <div class="card">
-      <h2 id="formTitle">Nouvelle location</h2>
-      <form class="form-grid" id="locationForm">
-        <div class="field">
-          <label for="machine">Machine *</label>
-          <input type="text" id="machine" placeholder="Ex: Mini-pelle 3T" autocomplete="off" />
-        </div>
-        <div class="field">
-          <label for="client">Client</label>
-          <input type="text" id="client" placeholder="Nom du client" autocomplete="off" />
-        </div>
-        <div class="field">
-          <label for="dateDebut">Date de début *</label>
-          <input type="date" id="dateDebut" />
-        </div>
-        <div class="field">
-          <label for="dateFin">Date de fin *</label>
-          <input type="date" id="dateFin" />
-        </div>
-        <div class="field">
-          <label for="livraison">Livraison</label>
-          <select id="livraison">
-            <option value="retrait_site">Retrait sur site</option>
-            <option value="transporteur">Transporteur</option>
-            <option value="gresiloc">Livraison par Gresiloc</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="notes">Notes</label>
-          <input type="text" id="notes" placeholder="Notes (optionnel)" autocomplete="off" />
-        </div>
-
-        <div class="checks">
-          <label class="check-item"><input type="checkbox" id="reglementRecu" /> Règlement reçu</label>
-          <label class="check-item"><input type="checkbox" id="cautionOk" /> Caution ok</label>
-          <label class="check-item"><input type="checkbox" id="assuranceOk" /> Assurance ok</label>
-        </div>
-
-        <p class="error-msg" id="errorMsg"></p>
-
-        <div class="form-actions">
-          <button type="submit" class="btn-primary" id="submitBtn">Ajouter</button>
-          <button type="button" class="btn-secondary" id="cancelBtn" style="display:none;">Annuler</button>
-        </div>
-      </form>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="locations">Locations</button>
+      <button class="tab-btn" data-tab="machines">Parc machine</button>
     </div>
 
-    <div class="filters">
-      <button class="filter-btn active" data-filter="all">Toutes</button>
-      <button class="filter-btn" data-filter="a_venir">À venir</button>
-      <button class="filter-btn" data-filter="en_cours">En cours</button>
-      <button class="filter-btn" data-filter="terminee">Terminées</button>
+    <!-- ===== Onglet Locations ===== -->
+    <div class="tab-panel active" id="tab-locations">
+      <div class="card">
+        <h2 id="formTitle">Nouvelle location</h2>
+        <form class="form-grid" id="locationForm">
+          <div class="field">
+            <label for="machineSelect">Machine *</label>
+            <select id="machineSelect"></select>
+          </div>
+          <div class="field">
+            <label for="client">Client</label>
+            <input type="text" id="client" placeholder="Nom du client" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="dateDebut">Date de début *</label>
+            <input type="date" id="dateDebut" />
+          </div>
+          <div class="field">
+            <label for="dateFin">Date de fin *</label>
+            <input type="date" id="dateFin" />
+          </div>
+          <div class="field">
+            <label for="compteurDebut">Relevé compteur début</label>
+            <input type="number" step="0.1" id="compteurDebut" placeholder="Ex: 1230.5" />
+          </div>
+          <div class="field">
+            <label for="compteurFin">Relevé compteur fin</label>
+            <input type="number" step="0.1" id="compteurFin" placeholder="Ex: 1255.0" />
+          </div>
+          <div class="field">
+            <label for="livraison">Livraison</label>
+            <select id="livraison">
+              <option value="retrait_site">Retrait sur site</option>
+              <option value="transporteur">Transporteur</option>
+              <option value="gresiloc">Livraison par Gresiloc</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="notes">Notes</label>
+            <input type="text" id="notes" placeholder="Notes (optionnel)" autocomplete="off" />
+          </div>
+
+          <div class="checks">
+            <label class="check-item"><input type="checkbox" id="reglementRecu" /> Règlement reçu</label>
+            <label class="check-item"><input type="checkbox" id="cautionOk" /> Caution ok</label>
+            <label class="check-item"><input type="checkbox" id="assuranceOk" /> Assurance ok</label>
+          </div>
+
+          <p class="error-msg" id="errorMsg"></p>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="submitBtn">Ajouter</button>
+            <button type="button" class="btn-secondary" id="cancelBtn" style="display:none;">Annuler</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">Toutes</button>
+        <button class="filter-btn" data-filter="a_venir">À venir</button>
+        <button class="filter-btn" data-filter="en_cours">En cours</button>
+        <button class="filter-btn" data-filter="terminee">Terminées</button>
+      </div>
+
+      <div class="location-list" id="locationList"></div>
     </div>
 
-    <div class="location-list" id="locationList"></div>
+    <!-- ===== Onglet Parc machine ===== -->
+    <div class="tab-panel" id="tab-machines">
+      <div class="card">
+        <h2 id="machineFormTitle">Nouvelle machine</h2>
+        <form class="form-grid" id="machineForm">
+          <div class="field">
+            <label for="machineNom">Nom / désignation *</label>
+            <input type="text" id="machineNom" placeholder="Ex: Mini-pelle 3T" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="machineSerie">Numéro de série *</label>
+            <input type="text" id="machineSerie" placeholder="Ex: SN-2024-0012" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="machineStatut">Statut</label>
+            <select id="machineStatut">
+              <option value="disponible">Disponible</option>
+              <option value="preparation">Préparation</option>
+              <option value="vidange">Vidange</option>
+              <option value="indisponible">Indisponible</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="machineNotes">Notes</label>
+            <input type="text" id="machineNotes" placeholder="Notes (optionnel)" autocomplete="off" />
+          </div>
+
+          <p class="error-msg" id="machineErrorMsg"></p>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="machineSubmitBtn">Ajouter</button>
+            <button type="button" class="btn-secondary" id="machineCancelBtn" style="display:none;">Annuler</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="machine-list" id="machineList"></div>
+    </div>
   </div>
 
   <script>
-    const API = '/api/locations';
+    const LOCATIONS_API = '/api/locations';
+    const MACHINES_API = '/api/machines';
+
     let locations = [];
+    let machines = [];
     let filter = 'all';
-    let editingId = null;
+    let editingLocationId = null;
+    let editingMachineId = null;
 
     const DELIVERY_LABELS = {
       retrait_site: '📍 Retrait sur site',
@@ -352,11 +467,22 @@
       gresiloc: '🚛 Livraison par Gresiloc',
     };
 
-    const form = document.getElementById('locationForm');
-    const errorMsg = document.getElementById('errorMsg');
-    const submitBtn = document.getElementById('submitBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const formTitle = document.getElementById('formTitle');
+    const MACHINE_STATUS_LABELS = {
+      disponible: 'Disponible',
+      preparation: 'Préparation',
+      vidange: 'Vidange',
+      indisponible: 'Indisponible',
+    };
+
+    // ---- Tabs ----
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+      });
+    });
 
     function todayStr() {
       return new Date().toISOString().slice(0, 10);
@@ -385,32 +511,59 @@
       return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
+    // ================= Locations =================
+
+    const locationForm = document.getElementById('locationForm');
+    const errorMsg = document.getElementById('errorMsg');
+    const submitBtn = document.getElementById('submitBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const formTitle = document.getElementById('formTitle');
+    const machineSelect = document.getElementById('machineSelect');
+
     async function fetchLocations() {
-      const res = await fetch(API);
+      const res = await fetch(LOCATIONS_API);
       locations = await res.json();
-      render();
+      renderLocations();
     }
 
-    function resetForm() {
-      form.reset();
-      editingId = null;
+    function populateMachineSelect() {
+      if (machines.length === 0) {
+        machineSelect.innerHTML = '<option value="">Aucune machine - créez-en une dans "Parc machine"</option>';
+        return;
+      }
+      const current = machineSelect.value;
+      machineSelect.innerHTML = machines.map(m =>
+        `<option value="${m.id}">${escapeHtml(m.nom)} — SN ${escapeHtml(m.numero_serie)} (${MACHINE_STATUS_LABELS[m.statut]})</option>`
+      ).join('');
+      if (current && machines.some(m => m.id === current)) {
+        machineSelect.value = current;
+      }
+    }
+
+    function resetLocationForm() {
+      locationForm.reset();
+      populateMachineSelect();
+      editingLocationId = null;
       submitBtn.textContent = 'Ajouter';
       formTitle.textContent = 'Nouvelle location';
       cancelBtn.style.display = 'none';
       errorMsg.style.display = 'none';
     }
 
-    function fillForm(loc) {
-      document.getElementById('machine').value = loc.machine;
+    function fillLocationForm(loc) {
+      populateMachineSelect();
+      machineSelect.value = loc.machine_id;
       document.getElementById('client').value = loc.client;
       document.getElementById('dateDebut').value = loc.date_debut;
       document.getElementById('dateFin').value = loc.date_fin;
+      document.getElementById('compteurDebut').value = loc.compteur_debut || '';
+      document.getElementById('compteurFin').value = loc.compteur_fin || '';
       document.getElementById('livraison').value = loc.livraison;
       document.getElementById('notes').value = loc.notes;
       document.getElementById('reglementRecu').checked = loc.reglement_recu;
       document.getElementById('cautionOk').checked = loc.caution_ok;
       document.getElementById('assuranceOk').checked = loc.assurance_ok;
-      editingId = loc.id;
+      editingLocationId = loc.id;
       submitBtn.textContent = 'Mettre à jour';
       formTitle.textContent = 'Modifier la location';
       cancelBtn.style.display = 'inline-block';
@@ -418,20 +571,20 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function startEdit(id) {
+    function startEditLocation(id) {
       const loc = locations.find(l => l.id === id);
-      if (loc) fillForm(loc);
+      if (loc) fillLocationForm(loc);
     }
 
     async function deleteLocation(id) {
       if (!confirm('Supprimer cette location ?')) return;
-      await fetch(`${API}/${id}`, { method: 'DELETE' });
-      if (editingId === id) resetForm();
+      await fetch(`${LOCATIONS_API}/${id}`, { method: 'DELETE' });
+      if (editingLocationId === id) resetLocationForm();
       await fetchLocations();
     }
 
-    async function togglePatch(id, field, current) {
-      await fetch(`${API}/${id}`, {
+    async function toggleLocationField(id, field, current) {
+      await fetch(`${LOCATIONS_API}/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [field]: !current }),
@@ -439,13 +592,15 @@
       await fetchLocations();
     }
 
-    form.addEventListener('submit', async e => {
+    locationForm.addEventListener('submit', async e => {
       e.preventDefault();
       const payload = {
-        machine: document.getElementById('machine').value.trim(),
+        machine_id: machineSelect.value,
         client: document.getElementById('client').value.trim(),
         date_debut: document.getElementById('dateDebut').value,
         date_fin: document.getElementById('dateFin').value,
+        compteur_debut: document.getElementById('compteurDebut').value,
+        compteur_fin: document.getElementById('compteurFin').value,
         livraison: document.getElementById('livraison').value,
         notes: document.getElementById('notes').value.trim(),
         reglement_recu: document.getElementById('reglementRecu').checked,
@@ -453,8 +608,8 @@
         assurance_ok: document.getElementById('assuranceOk').checked,
       };
 
-      const url = editingId ? `${API}/${editingId}` : API;
-      const method = editingId ? 'PATCH' : 'POST';
+      const url = editingLocationId ? `${LOCATIONS_API}/${editingLocationId}` : LOCATIONS_API;
+      const method = editingLocationId ? 'PATCH' : 'POST';
 
       const res = await fetch(url, {
         method,
@@ -469,22 +624,29 @@
         return;
       }
 
-      resetForm();
+      resetLocationForm();
       await fetchLocations();
     });
 
-    cancelBtn.addEventListener('click', resetForm);
+    cancelBtn.addEventListener('click', resetLocationForm);
 
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         filter = btn.dataset.filter;
-        render();
+        renderLocations();
       });
     });
 
-    function render() {
+    function compteurLine(loc) {
+      if (!loc.compteur_debut && !loc.compteur_fin) return '';
+      const debut = loc.compteur_debut || '?';
+      const fin = loc.compteur_fin || '?';
+      return `<div class="location-compteur">⏱️ Compteur : ${escapeHtml(debut)} → ${escapeHtml(fin)}</div>`;
+    }
+
+    function renderLocations() {
       const list = document.getElementById('locationList');
 
       const withStatus = locations.map(l => ({ ...l, status: computeStatus(l) }));
@@ -503,25 +665,26 @@
         <div class="location-item">
           <div class="location-top">
             <div>
-              <div class="location-title">${escapeHtml(loc.machine)}</div>
-              ${loc.client ? `<div class="location-client">👤 ${escapeHtml(loc.client)}</div>` : ''}
+              <div class="location-title">${escapeHtml(loc.machine_nom)}</div>
+              <div class="location-client">🔧 SN ${escapeHtml(loc.machine_numero_serie)}${loc.client ? ` · 👤 ${escapeHtml(loc.client)}` : ''}</div>
             </div>
             <span class="status-badge status-${loc.status}">${STATUS_LABELS[loc.status]}</span>
           </div>
           <div class="location-dates">📅 ${formatDate(loc.date_debut)} → ${formatDate(loc.date_fin)}</div>
+          ${compteurLine(loc)}
           <div class="location-meta">
-            <span class="toggle-badge ${loc.reglement_recu ? 'ok' : ''}" onclick="togglePatch('${loc.id}', 'reglement_recu', ${loc.reglement_recu})">
+            <span class="toggle-badge ${loc.reglement_recu ? 'ok' : ''}" onclick="toggleLocationField('${loc.id}', 'reglement_recu', ${loc.reglement_recu})">
               ${loc.reglement_recu ? '✅' : '⬜'} Règlement reçu
             </span>
-            <span class="toggle-badge ${loc.caution_ok ? 'ok' : ''}" onclick="togglePatch('${loc.id}', 'caution_ok', ${loc.caution_ok})">
+            <span class="toggle-badge ${loc.caution_ok ? 'ok' : ''}" onclick="toggleLocationField('${loc.id}', 'caution_ok', ${loc.caution_ok})">
               ${loc.caution_ok ? '✅' : '⬜'} Caution ok
             </span>
-            <span class="toggle-badge ${loc.assurance_ok ? 'ok' : ''}" onclick="togglePatch('${loc.id}', 'assurance_ok', ${loc.assurance_ok})">
+            <span class="toggle-badge ${loc.assurance_ok ? 'ok' : ''}" onclick="toggleLocationField('${loc.id}', 'assurance_ok', ${loc.assurance_ok})">
               ${loc.assurance_ok ? '✅' : '⬜'} Assurance ok
             </span>
             <span class="delivery-badge">${DELIVERY_LABELS[loc.livraison] || loc.livraison}</span>
             <span class="spacer"></span>
-            <button class="icon-btn" onclick="startEdit('${loc.id}')" title="Modifier">✏️</button>
+            <button class="icon-btn" onclick="startEditLocation('${loc.id}')" title="Modifier">✏️</button>
             <button class="icon-btn delete" onclick="deleteLocation('${loc.id}')" title="Supprimer">✕</button>
           </div>
           ${loc.notes ? `<div class="notes-text">${escapeHtml(loc.notes)}</div>` : ''}
@@ -529,7 +692,135 @@
       `).join('');
     }
 
-    fetchLocations();
+    // ================= Machines =================
+
+    const machineForm = document.getElementById('machineForm');
+    const machineErrorMsg = document.getElementById('machineErrorMsg');
+    const machineSubmitBtn = document.getElementById('machineSubmitBtn');
+    const machineCancelBtn = document.getElementById('machineCancelBtn');
+    const machineFormTitle = document.getElementById('machineFormTitle');
+
+    async function fetchMachines() {
+      const res = await fetch(MACHINES_API);
+      machines = await res.json();
+      populateMachineSelect();
+      renderMachines();
+    }
+
+    function resetMachineForm() {
+      machineForm.reset();
+      document.getElementById('machineStatut').value = 'disponible';
+      editingMachineId = null;
+      machineSubmitBtn.textContent = 'Ajouter';
+      machineFormTitle.textContent = 'Nouvelle machine';
+      machineCancelBtn.style.display = 'none';
+      machineErrorMsg.style.display = 'none';
+    }
+
+    function fillMachineForm(m) {
+      document.getElementById('machineNom').value = m.nom;
+      document.getElementById('machineSerie').value = m.numero_serie;
+      document.getElementById('machineStatut').value = m.statut;
+      document.getElementById('machineNotes').value = m.notes;
+      editingMachineId = m.id;
+      machineSubmitBtn.textContent = 'Mettre à jour';
+      machineFormTitle.textContent = 'Modifier la machine';
+      machineCancelBtn.style.display = 'inline-block';
+      machineErrorMsg.style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function startEditMachine(id) {
+      const m = machines.find(x => x.id === id);
+      if (m) fillMachineForm(m);
+    }
+
+    async function deleteMachine(id) {
+      if (!confirm('Supprimer cette machine du parc ?')) return;
+      await fetch(`${MACHINES_API}/${id}`, { method: 'DELETE' });
+      if (editingMachineId === id) resetMachineForm();
+      await fetchMachines();
+    }
+
+    async function changeMachineStatus(id, statut) {
+      await fetch(`${MACHINES_API}/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ statut }),
+      });
+      await fetchMachines();
+    }
+
+    machineForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const payload = {
+        nom: document.getElementById('machineNom').value.trim(),
+        numero_serie: document.getElementById('machineSerie').value.trim(),
+        statut: document.getElementById('machineStatut').value,
+        notes: document.getElementById('machineNotes').value.trim(),
+      };
+
+      const url = editingMachineId ? `${MACHINES_API}/${editingMachineId}` : MACHINES_API;
+      const method = editingMachineId ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        machineErrorMsg.textContent = data.error || 'Une erreur est survenue.';
+        machineErrorMsg.style.display = 'block';
+        return;
+      }
+
+      resetMachineForm();
+      await fetchMachines();
+    });
+
+    machineCancelBtn.addEventListener('click', resetMachineForm);
+
+    function renderMachines() {
+      const list = document.getElementById('machineList');
+
+      if (machines.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">🚜</div>
+            <p>Aucune machine dans le parc.</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = machines.map(m => `
+        <div class="machine-item">
+          <div class="machine-top">
+            <div>
+              <div class="machine-title">${escapeHtml(m.nom)}</div>
+              <div class="machine-serial">🔧 SN ${escapeHtml(m.numero_serie)}</div>
+            </div>
+            <select class="status-select status-${m.statut}" onchange="changeMachineStatus('${m.id}', this.value)">
+              ${Object.entries(MACHINE_STATUS_LABELS).map(([value, label]) =>
+                `<option value="${value}" ${m.statut === value ? 'selected' : ''}>${label}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div class="location-meta" style="border-top:none; margin-top:0; padding-top:0;">
+            <span class="spacer"></span>
+            <button class="icon-btn" onclick="startEditMachine('${m.id}')" title="Modifier">✏️</button>
+            <button class="icon-btn delete" onclick="deleteMachine('${m.id}')" title="Supprimer">✕</button>
+          </div>
+          ${m.notes ? `<div class="notes-text">${escapeHtml(m.notes)}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    (async function init() {
+      await fetchMachines();
+      await fetchLocations();
+    })();
   </script>
 </body>
 </html>
