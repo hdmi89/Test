@@ -297,6 +297,49 @@
     select.status-select.status-vidange { background: #fef3c7; color: #92400e; border-color: #fbbf24; }
     select.status-select.status-indisponible { background: #fee2e2; color: #b91c1c; border-color: #f87171; }
 
+    select.status-select.ebp-a_creer_ebp { background: #fef3c7; color: #92400e; border-color: #fbbf24; }
+    select.status-select.ebp-a_facturer_ebp { background: #e0e7ff; color: #4338ca; border-color: #818cf8; }
+    select.status-select.ebp-hors_radar { background: #f3f4f6; color: #6b7280; border-color: #d1d5db; }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .logout-link {
+      font-size: 0.85rem;
+      color: #6b7280;
+      text-decoration: none;
+      padding: 6px 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+
+    .logout-link:hover { color: #ef4444; border-color: #fca5a5; background: #fff; }
+
+    .calendar-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    .calendar-card input {
+      flex: 1;
+      min-width: 220px;
+      padding: 8px 10px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      color: #374151;
+      background: #f9fafb;
+    }
+
     .spacer { flex: 1; }
 
     .icon-btn {
@@ -336,8 +379,13 @@
 </head>
 <body>
   <div class="container">
-    <h1>🚜 Gestion du parc machine</h1>
-    <p class="subtitle">Suivi interne du parc et des locations de machines.</p>
+    <div class="header-row">
+      <div>
+        <h1>🚜 Gestion du parc machine</h1>
+        <p class="subtitle">Suivi interne du parc et des locations de machines.</p>
+      </div>
+      <a class="logout-link" href="/logout">Déconnexion</a>
+    </div>
 
     <div class="tabs">
       <button class="tab-btn active" data-tab="locations">Locations</button>
@@ -356,6 +404,14 @@
           <div class="field">
             <label for="client">Client</label>
             <input type="text" id="client" placeholder="Nom du client" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="clientCodeEbp">Code client EBP</label>
+            <input type="text" id="clientCodeEbp" placeholder="Ex: CL00123" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="clientTelephone">Numéro de portable</label>
+            <input type="text" id="clientTelephone" placeholder="Ex: 06 12 34 56 78" autocomplete="off" />
           </div>
           <div class="field">
             <label for="dateDebut">Date de début *</label>
@@ -382,6 +438,23 @@
             </select>
           </div>
           <div class="field">
+            <label for="statutEbp">Statut</label>
+            <select id="statutEbp">
+              <option value="a_creer_ebp">À créer sur EBP</option>
+              <option value="a_facturer_ebp">À facturer EBP</option>
+              <option value="hors_radar">Hors radar</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="referent">Référent</label>
+            <select id="referent">
+              <option value="">Non assigné</option>
+              <option value="robin">Robin</option>
+              <option value="jeremie">Jérémie</option>
+              <option value="sebastien">Sébastien</option>
+            </select>
+          </div>
+          <div class="field">
             <label for="notes">Notes</label>
             <input type="text" id="notes" placeholder="Notes (optionnel)" autocomplete="off" />
           </div>
@@ -399,6 +472,12 @@
             <button type="button" class="btn-secondary" id="cancelBtn" style="display:none;">Annuler</button>
           </div>
         </form>
+      </div>
+
+      <div class="card calendar-card">
+        <span>🔗 Abonnement Google Agenda :</span>
+        <input type="text" id="calendarFeedUrl" readonly value="Chargement..." onclick="this.select()" />
+        <button type="button" class="btn-secondary" id="copyFeedBtn">Copier le lien</button>
       </div>
 
       <div class="filters">
@@ -473,6 +552,31 @@
       vidange: 'Vidange',
       indisponible: 'Indisponible',
     };
+
+    const EBP_STATUS_LABELS = {
+      a_creer_ebp: 'À créer sur EBP',
+      a_facturer_ebp: 'À facturer EBP',
+      hors_radar: 'Hors radar',
+    };
+
+    const REFERENT_LABELS = {
+      robin: 'Robin',
+      jeremie: 'Jérémie',
+      sebastien: 'Sébastien',
+    };
+
+    // ---- Abonnement Google Agenda ----
+    (async function loadCalendarFeed() {
+      const res = await fetch('/api/calendar-feed-url');
+      const data = await res.json();
+      document.getElementById('calendarFeedUrl').value = data.url;
+    })();
+
+    document.getElementById('copyFeedBtn').addEventListener('click', () => {
+      const input = document.getElementById('calendarFeedUrl');
+      input.select();
+      navigator.clipboard.writeText(input.value);
+    });
 
     // ---- Tabs ----
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -554,11 +658,15 @@
       populateMachineSelect();
       machineSelect.value = loc.machine_id;
       document.getElementById('client').value = loc.client;
+      document.getElementById('clientCodeEbp').value = loc.client_code_ebp || '';
+      document.getElementById('clientTelephone').value = loc.client_telephone || '';
       document.getElementById('dateDebut').value = loc.date_debut;
       document.getElementById('dateFin').value = loc.date_fin;
       document.getElementById('compteurDebut').value = loc.compteur_debut || '';
       document.getElementById('compteurFin').value = loc.compteur_fin || '';
       document.getElementById('livraison').value = loc.livraison;
+      document.getElementById('statutEbp').value = loc.statut_ebp;
+      document.getElementById('referent').value = loc.referent || '';
       document.getElementById('notes').value = loc.notes;
       document.getElementById('reglementRecu').checked = loc.reglement_recu;
       document.getElementById('cautionOk').checked = loc.caution_ok;
@@ -592,16 +700,29 @@
       await fetchLocations();
     }
 
+    async function setLocationField(id, field, value) {
+      await fetch(`${LOCATIONS_API}/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value }),
+      });
+      await fetchLocations();
+    }
+
     locationForm.addEventListener('submit', async e => {
       e.preventDefault();
       const payload = {
         machine_id: machineSelect.value,
         client: document.getElementById('client').value.trim(),
+        client_code_ebp: document.getElementById('clientCodeEbp').value.trim(),
+        client_telephone: document.getElementById('clientTelephone').value.trim(),
         date_debut: document.getElementById('dateDebut').value,
         date_fin: document.getElementById('dateFin').value,
         compteur_debut: document.getElementById('compteurDebut').value,
         compteur_fin: document.getElementById('compteurFin').value,
         livraison: document.getElementById('livraison').value,
+        statut_ebp: document.getElementById('statutEbp').value,
+        referent: document.getElementById('referent').value,
         notes: document.getElementById('notes').value.trim(),
         reglement_recu: document.getElementById('reglementRecu').checked,
         caution_ok: document.getElementById('cautionOk').checked,
@@ -666,13 +787,24 @@
           <div class="location-top">
             <div>
               <div class="location-title">${escapeHtml(loc.machine_nom)}</div>
-              <div class="location-client">🔧 SN ${escapeHtml(loc.machine_numero_serie)}${loc.client ? ` · 👤 ${escapeHtml(loc.client)}` : ''}</div>
+              <div class="location-client">🔧 SN ${escapeHtml(loc.machine_numero_serie)}${loc.client ? ` · 👤 ${escapeHtml(loc.client)}` : ''}${loc.client_code_ebp ? ` · 🏷️ ${escapeHtml(loc.client_code_ebp)}` : ''}${loc.client_telephone ? ` · 📱 ${escapeHtml(loc.client_telephone)}` : ''}</div>
             </div>
             <span class="status-badge status-${loc.status}">${STATUS_LABELS[loc.status]}</span>
           </div>
           <div class="location-dates">📅 ${formatDate(loc.date_debut)} → ${formatDate(loc.date_fin)}</div>
           ${compteurLine(loc)}
           <div class="location-meta">
+            <select class="status-select ebp-${loc.statut_ebp}" onchange="setLocationField('${loc.id}', 'statut_ebp', this.value)">
+              ${Object.entries(EBP_STATUS_LABELS).map(([value, label]) =>
+                `<option value="${value}" ${loc.statut_ebp === value ? 'selected' : ''}>${label}</option>`
+              ).join('')}
+            </select>
+            <select class="status-select" onchange="setLocationField('${loc.id}', 'referent', this.value)">
+              <option value="" ${!loc.referent ? 'selected' : ''}>👤 Non assigné</option>
+              ${Object.entries(REFERENT_LABELS).map(([value, label]) =>
+                `<option value="${value}" ${loc.referent === value ? 'selected' : ''}>👤 ${label}</option>`
+              ).join('')}
+            </select>
             <span class="toggle-badge ${loc.reglement_recu ? 'ok' : ''}" onclick="toggleLocationField('${loc.id}', 'reglement_recu', ${loc.reglement_recu})">
               ${loc.reglement_recu ? '✅' : '⬜'} Règlement reçu
             </span>
@@ -684,6 +816,7 @@
             </span>
             <span class="delivery-badge">${DELIVERY_LABELS[loc.livraison] || loc.livraison}</span>
             <span class="spacer"></span>
+            <a class="icon-btn" href="/api/locations/${loc.id}/ics" title="Exporter .ics">📅</a>
             <button class="icon-btn" onclick="startEditLocation('${loc.id}')" title="Modifier">✏️</button>
             <button class="icon-btn delete" onclick="deleteLocation('${loc.id}')" title="Supprimer">✕</button>
           </div>
