@@ -390,6 +390,7 @@
     <div class="tabs">
       <button class="tab-btn active" data-tab="locations">Locations</button>
       <button class="tab-btn" data-tab="machines">Parc machine</button>
+      <button class="tab-btn" data-tab="accessoires">Accessoires</button>
     </div>
 
     <!-- ===== Onglet Locations ===== -->
@@ -453,6 +454,18 @@
               <option value="jeremie">Jérémie</option>
               <option value="sebastien">Sébastien</option>
             </select>
+          </div>
+          <div class="field">
+            <label for="accessoire1Select">Accessoire 1</label>
+            <select id="accessoire1Select"></select>
+          </div>
+          <div class="field">
+            <label for="accessoire2Select">Accessoire 2</label>
+            <select id="accessoire2Select"></select>
+          </div>
+          <div class="field">
+            <label for="accessoire3Select">Accessoire 3</label>
+            <select id="accessoire3Select"></select>
           </div>
           <div class="field">
             <label for="notes">Notes</label>
@@ -528,17 +541,46 @@
 
       <div class="machine-list" id="machineList"></div>
     </div>
+
+    <!-- ===== Onglet Accessoires ===== -->
+    <div class="tab-panel" id="tab-accessoires">
+      <div class="card">
+        <h2 id="accessoireFormTitle">Nouvel accessoire</h2>
+        <form class="form-grid" id="accessoireForm">
+          <div class="field">
+            <label for="accessoireNom">Nom *</label>
+            <input type="text" id="accessoireNom" placeholder="Ex: Godet curage 40cm" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="accessoireNotes">Notes</label>
+            <input type="text" id="accessoireNotes" placeholder="Notes (optionnel)" autocomplete="off" />
+          </div>
+
+          <p class="error-msg" id="accessoireErrorMsg"></p>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="accessoireSubmitBtn">Ajouter</button>
+            <button type="button" class="btn-secondary" id="accessoireCancelBtn" style="display:none;">Annuler</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="machine-list" id="accessoireList"></div>
+    </div>
   </div>
 
   <script>
     const LOCATIONS_API = '/api/locations';
     const MACHINES_API = '/api/machines';
+    const ACCESSOIRES_API = '/api/accessoires';
 
     let locations = [];
     let machines = [];
+    let accessoires = [];
     let filter = 'all';
     let editingLocationId = null;
     let editingMachineId = null;
+    let editingAccessoireId = null;
 
     const DELIVERY_LABELS = {
       retrait_site: '📍 Retrait sur site',
@@ -644,9 +686,22 @@
       }
     }
 
+    function populateAccessoireSelects() {
+      [1, 2, 3].forEach(slot => {
+        const select = document.getElementById(`accessoire${slot}Select`);
+        const current = select.value;
+        select.innerHTML = '<option value="">Aucun</option>' +
+          accessoires.map(a => `<option value="${a.id}">${escapeHtml(a.nom)}</option>`).join('');
+        if (current && accessoires.some(a => a.id === current)) {
+          select.value = current;
+        }
+      });
+    }
+
     function resetLocationForm() {
       locationForm.reset();
       populateMachineSelect();
+      populateAccessoireSelects();
       editingLocationId = null;
       submitBtn.textContent = 'Ajouter';
       formTitle.textContent = 'Nouvelle location';
@@ -657,6 +712,10 @@
     function fillLocationForm(loc) {
       populateMachineSelect();
       machineSelect.value = loc.machine_id;
+      populateAccessoireSelects();
+      document.getElementById('accessoire1Select').value = loc.accessoire1_id || '';
+      document.getElementById('accessoire2Select').value = loc.accessoire2_id || '';
+      document.getElementById('accessoire3Select').value = loc.accessoire3_id || '';
       document.getElementById('client').value = loc.client;
       document.getElementById('clientCodeEbp').value = loc.client_code_ebp || '';
       document.getElementById('clientTelephone').value = loc.client_telephone || '';
@@ -723,6 +782,9 @@
         livraison: document.getElementById('livraison').value,
         statut_ebp: document.getElementById('statutEbp').value,
         referent: document.getElementById('referent').value,
+        accessoire1_id: document.getElementById('accessoire1Select').value,
+        accessoire2_id: document.getElementById('accessoire2Select').value,
+        accessoire3_id: document.getElementById('accessoire3Select').value,
         notes: document.getElementById('notes').value.trim(),
         reglement_recu: document.getElementById('reglementRecu').checked,
         caution_ok: document.getElementById('cautionOk').checked,
@@ -767,6 +829,12 @@
       return `<div class="location-compteur">⏱️ Compteur : ${escapeHtml(debut)} → ${escapeHtml(fin)}</div>`;
     }
 
+    function accessoiresLine(loc) {
+      const noms = [loc.accessoire1_nom, loc.accessoire2_nom, loc.accessoire3_nom].filter(Boolean);
+      if (noms.length === 0) return '';
+      return `<div class="location-compteur">🧰 Accessoires : ${noms.map(escapeHtml).join(', ')}</div>`;
+    }
+
     function renderLocations() {
       const list = document.getElementById('locationList');
 
@@ -793,6 +861,7 @@
           </div>
           <div class="location-dates">📅 ${formatDate(loc.date_debut)} → ${formatDate(loc.date_fin)}</div>
           ${compteurLine(loc)}
+          ${accessoiresLine(loc)}
           <div class="location-meta">
             <select class="status-select ebp-${loc.statut_ebp}" onchange="setLocationField('${loc.id}', 'statut_ebp', this.value)">
               ${Object.entries(EBP_STATUS_LABELS).map(([value, label]) =>
@@ -950,8 +1019,111 @@
       `).join('');
     }
 
+    // ================= Accessoires =================
+
+    const accessoireForm = document.getElementById('accessoireForm');
+    const accessoireErrorMsg = document.getElementById('accessoireErrorMsg');
+    const accessoireSubmitBtn = document.getElementById('accessoireSubmitBtn');
+    const accessoireCancelBtn = document.getElementById('accessoireCancelBtn');
+    const accessoireFormTitle = document.getElementById('accessoireFormTitle');
+
+    async function fetchAccessoires() {
+      const res = await fetch(ACCESSOIRES_API);
+      accessoires = await res.json();
+      populateAccessoireSelects();
+      renderAccessoires();
+    }
+
+    function resetAccessoireForm() {
+      accessoireForm.reset();
+      editingAccessoireId = null;
+      accessoireSubmitBtn.textContent = 'Ajouter';
+      accessoireFormTitle.textContent = 'Nouvel accessoire';
+      accessoireCancelBtn.style.display = 'none';
+      accessoireErrorMsg.style.display = 'none';
+    }
+
+    function fillAccessoireForm(a) {
+      document.getElementById('accessoireNom').value = a.nom;
+      document.getElementById('accessoireNotes').value = a.notes;
+      editingAccessoireId = a.id;
+      accessoireSubmitBtn.textContent = 'Mettre à jour';
+      accessoireFormTitle.textContent = "Modifier l'accessoire";
+      accessoireCancelBtn.style.display = 'inline-block';
+      accessoireErrorMsg.style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function startEditAccessoire(id) {
+      const a = accessoires.find(x => x.id === id);
+      if (a) fillAccessoireForm(a);
+    }
+
+    async function deleteAccessoire(id) {
+      if (!confirm('Supprimer cet accessoire ?')) return;
+      await fetch(`${ACCESSOIRES_API}/${id}`, { method: 'DELETE' });
+      if (editingAccessoireId === id) resetAccessoireForm();
+      await fetchAccessoires();
+    }
+
+    accessoireForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const payload = {
+        nom: document.getElementById('accessoireNom').value.trim(),
+        notes: document.getElementById('accessoireNotes').value.trim(),
+      };
+
+      const url = editingAccessoireId ? `${ACCESSOIRES_API}/${editingAccessoireId}` : ACCESSOIRES_API;
+      const method = editingAccessoireId ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        accessoireErrorMsg.textContent = data.error || 'Une erreur est survenue.';
+        accessoireErrorMsg.style.display = 'block';
+        return;
+      }
+
+      resetAccessoireForm();
+      await fetchAccessoires();
+    });
+
+    accessoireCancelBtn.addEventListener('click', resetAccessoireForm);
+
+    function renderAccessoires() {
+      const list = document.getElementById('accessoireList');
+
+      if (accessoires.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">🧰</div>
+            <p>Aucun accessoire enregistré.</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = accessoires.map(a => `
+        <div class="machine-item">
+          <div class="machine-top">
+            <div class="machine-title">${escapeHtml(a.nom)}</div>
+            <div class="location-meta" style="border-top:none; margin-top:0; padding-top:0;">
+              <button class="icon-btn" onclick="startEditAccessoire('${a.id}')" title="Modifier">✏️</button>
+              <button class="icon-btn delete" onclick="deleteAccessoire('${a.id}')" title="Supprimer">✕</button>
+            </div>
+          </div>
+          ${a.notes ? `<div class="notes-text">${escapeHtml(a.notes)}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
     (async function init() {
       await fetchMachines();
+      await fetchAccessoires();
       await fetchLocations();
     })();
   </script>

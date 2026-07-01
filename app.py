@@ -10,6 +10,7 @@ app = Flask(__name__, static_folder='static')
 
 MACHINES_FILE = 'machines.json'
 LOCATIONS_FILE = 'locations.json'
+ACCESSOIRES_FILE = 'accessoires.json'
 
 LIVRAISON_CHOICES = {'retrait_site', 'transporteur', 'gresiloc'}
 MACHINE_STATUS_CHOICES = {'disponible', 'preparation', 'vidange', 'indisponible'}
@@ -127,6 +128,14 @@ def save_locations(locations):
     save_json(LOCATIONS_FILE, locations)
 
 
+def load_accessoires():
+    return load_json(ACCESSOIRES_FILE)
+
+
+def save_accessoires(accessoires):
+    save_json(ACCESSOIRES_FILE, accessoires)
+
+
 def validate_machine_payload(data, machines, machine_id=None, partial=False):
     errors = []
 
@@ -149,7 +158,14 @@ def validate_machine_payload(data, machines, machine_id=None, partial=False):
     return errors
 
 
-def validate_location_payload(data, machines, partial=False):
+def validate_accessoire_payload(data, partial=False):
+    errors = []
+    if not partial and not str(data.get('nom', '')).strip():
+        errors.append("Le nom de l'accessoire est requis")
+    return errors
+
+
+def validate_location_payload(data, machines, accessoires, partial=False):
     errors = []
 
     def required(field, label):
@@ -179,7 +195,21 @@ def validate_location_payload(data, machines, partial=False):
     if 'referent' in data and data['referent'] not in REFERENT_CHOICES and data['referent'] != '':
         errors.append('Référent invalide')
 
-    return errors, machine
+    accessoire_results = {}
+    for slot in (1, 2, 3):
+        field = f'accessoire{slot}_id'
+        if field in data:
+            value = data[field]
+            if not value:
+                accessoire_results[slot] = None
+            else:
+                found = next((a for a in accessoires if a['id'] == value), None)
+                if found is None:
+                    errors.append(f'Accessoire {slot} introuvable')
+                else:
+                    accessoire_results[slot] = found
+
+    return errors, machine, accessoire_results
 
 
 def ics_escape(text):
@@ -201,6 +231,9 @@ def build_vevent(loc):
         description_parts.append(f"Portable : {loc['client_telephone']}")
     if loc.get('referent'):
         description_parts.append(f"Référent : {REFERENT_LABELS.get(loc['referent'], loc['referent'])}")
+    accessoires_noms = [loc.get(f'accessoire{slot}_nom') for slot in (1, 2, 3) if loc.get(f'accessoire{slot}_nom')]
+    if accessoires_noms:
+        description_parts.append(f"Accessoires : {', '.join(accessoires_noms)}")
     description = '\n'.join(description_parts)
 
     dtstamp = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
@@ -339,6 +372,62 @@ def delete_machine(machine_id):
     return '', 204
 
 
+# ---- Accessoires ----
+
+@app.route('/api/accessoires', methods=['GET'])
+def get_accessoires():
+    accessoires = load_accessoires()
+    accessoires.sort(key=lambda a: a.get('nom', '').lower())
+    return jsonify(accessoires)
+
+
+@app.route('/api/accessoires', methods=['POST'])
+def create_accessoire():
+    data = request.get_json() or {}
+    errors = validate_accessoire_payload(data)
+    if errors:
+        return jsonify({'error': '; '.join(errors)}), 400
+
+    accessoire = {
+        'id': str(uuid.uuid4()),
+        'nom': data['nom'].strip(),
+        'notes': data.get('notes', '').strip(),
+    }
+    accessoires = load_accessoires()
+    accessoires.append(accessoire)
+    save_accessoires(accessoires)
+    return jsonify(accessoire), 201
+
+
+@app.route('/api/accessoires/<accessoire_id>', methods=['PATCH'])
+def update_accessoire(accessoire_id):
+    accessoires = load_accessoires()
+    accessoire = next((a for a in accessoires if a['id'] == accessoire_id), None)
+    if accessoire is None:
+        return jsonify({'error': 'Not found'}), 404
+
+    data = request.get_json() or {}
+    errors = validate_accessoire_payload(data, partial=True)
+    if errors:
+        return jsonify({'error': '; '.join(errors)}), 400
+
+    if 'nom' in data and data['nom'].strip():
+        accessoire['nom'] = data['nom'].strip()
+    if 'notes' in data:
+        accessoire['notes'] = data['notes'].strip()
+
+    save_accessoires(accessoires)
+    return jsonify(accessoire)
+
+
+@app.route('/api/accessoires/<accessoire_id>', methods=['DELETE'])
+def delete_accessoire(accessoire_id):
+    accessoires = load_accessoires()
+    accessoires = [a for a in accessoires if a['id'] != accessoire_id]
+    save_accessoires(accessoires)
+    return '', 204
+
+
 # ---- Locations ----
 
 @app.route('/api/locations', methods=['GET'])
@@ -352,7 +441,8 @@ def get_locations():
 def create_location():
     data = request.get_json() or {}
     machines = load_machines()
-    errors, machine = validate_location_payload(data, machines)
+    accessoires = load_accessoires()
+    errors, machine, accessoire_results = validate_location_payload(data, machines, accessoires)
     if errors:
         return jsonify({'error': '; '.join(errors)}), 400
 
@@ -376,6 +466,11 @@ def create_location():
         'referent': data.get('referent') if data.get('referent') in REFERENT_CHOICES else '',
         'notes': data.get('notes', '').strip(),
     }
+    for slot in (1, 2, 3):
+        found = accessoire_results.get(slot)
+        location[f'accessoire{slot}_id'] = found['id'] if found else ''
+        location[f'accessoire{slot}_nom'] = found['nom'] if found else ''
+
     locations = load_locations()
     locations.append(location)
     save_locations(locations)
@@ -390,8 +485,9 @@ def update_location(location_id):
         return jsonify({'error': 'Not found'}), 404
 
     machines = load_machines()
+    accessoires = load_accessoires()
     data = request.get_json() or {}
-    errors, machine = validate_location_payload(data, machines, partial=True)
+    errors, machine, accessoire_results = validate_location_payload(data, machines, accessoires, partial=True)
     if errors:
         return jsonify({'error': '; '.join(errors)}), 400
 
@@ -399,6 +495,9 @@ def update_location(location_id):
         location['machine_id'] = machine['id']
         location['machine_nom'] = machine['nom']
         location['machine_numero_serie'] = machine['numero_serie']
+    for slot, found in accessoire_results.items():
+        location[f'accessoire{slot}_id'] = found['id'] if found else ''
+        location[f'accessoire{slot}_nom'] = found['nom'] if found else ''
     if 'client' in data:
         location['client'] = data['client'].strip()
     if 'client_code_ebp' in data:
