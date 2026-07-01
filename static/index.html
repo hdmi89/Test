@@ -680,8 +680,16 @@
                 <input type="date" id="dateDebut" />
               </div>
               <div class="field">
+                <label for="heureDebut">Heure de début</label>
+                <input type="time" id="heureDebut" />
+              </div>
+              <div class="field">
                 <label for="dateFin">Date de fin *</label>
                 <input type="date" id="dateFin" />
+              </div>
+              <div class="field">
+                <label for="heureFin">Heure de fin</label>
+                <input type="time" id="heureFin" />
               </div>
               <div class="field">
                 <label for="compteurDebut">Relevé compteur début</label>
@@ -996,6 +1004,10 @@
       return `${day}/${m}/${y}`;
     }
 
+    function formatDateTime(d, t) {
+      return t ? `${formatDate(d)} ${t}` : formatDate(d);
+    }
+
     function escapeHtml(str) {
       return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
@@ -1005,6 +1017,7 @@
     const locationForm = document.getElementById('locationForm');
     const errorMsg = document.getElementById('errorMsg');
     const submitBtn = document.getElementById('submitBtn');
+    document.getElementById('dateDebut').min = todayStr();
     const cancelBtn = document.getElementById('cancelBtn');
     const formTitle = document.getElementById('formTitle');
     const machineSelect = document.getElementById('machineSelect');
@@ -1075,6 +1088,7 @@
       populateMachineSelect();
       populateAccessoireSelects();
       setAccessoireVisibility(1);
+      document.getElementById('dateDebut').min = todayStr();
       editingLocationId = null;
       submitBtn.textContent = 'Ajouter';
       formTitle.textContent = 'Nouvelle location';
@@ -1094,8 +1108,11 @@
       document.getElementById('client').value = loc.client;
       document.getElementById('clientCodeEbp').value = loc.client_code_ebp || '';
       document.getElementById('clientTelephone').value = loc.client_telephone || '';
+      document.getElementById('dateDebut').removeAttribute('min');
       document.getElementById('dateDebut').value = loc.date_debut;
+      document.getElementById('heureDebut').value = loc.heure_debut || '';
       document.getElementById('dateFin').value = loc.date_fin;
+      document.getElementById('heureFin').value = loc.heure_fin || '';
       document.getElementById('compteurDebut').value = loc.compteur_debut || '';
       document.getElementById('compteurFin').value = loc.compteur_fin || '';
       document.getElementById('livraison').value = loc.livraison;
@@ -1153,7 +1170,9 @@
         client_code_ebp: document.getElementById('clientCodeEbp').value.trim(),
         client_telephone: document.getElementById('clientTelephone').value.trim(),
         date_debut: document.getElementById('dateDebut').value,
+        heure_debut: document.getElementById('heureDebut').value,
         date_fin: document.getElementById('dateFin').value,
+        heure_fin: document.getElementById('heureFin').value,
         compteur_debut: document.getElementById('compteurDebut').value,
         compteur_fin: document.getElementById('compteurFin').value,
         livraison: document.getElementById('livraison').value,
@@ -1269,7 +1288,7 @@
             </div>
             <span class="pill pill-${loc.status}">${STATUS_LABELS[loc.status]}</span>
           </div>
-          <div class="location-dates">${icon('calendar')} ${formatDate(loc.date_debut)} → ${formatDate(loc.date_fin)}</div>
+          <div class="location-dates">${icon('calendar')} ${formatDateTime(loc.date_debut, loc.heure_debut)} → ${formatDateTime(loc.date_fin, loc.heure_fin)}</div>
           ${compteurLine(loc)}
           ${accessoiresLine(loc)}
           <div class="location-meta">
@@ -1406,7 +1425,9 @@
         return;
       }
 
-      list.innerHTML = machines.map(m => `
+      list.innerHTML = machines.map(m => {
+        const activeRental = getActiveRental(m.id);
+        return `
         <div class="item-card">
           <div class="item-top">
             <div>
@@ -1414,9 +1435,9 @@
               <div class="location-submeta">
                 <span class="meta-chip">${icon('tag')} SN ${escapeHtml(m.numero_serie)}</span>
               </div>
-              ${activeRentalBadge(m.id)}
+              ${activeRentalBadge(activeRental)}
             </div>
-            <select class="status-select status-${m.statut}" onchange="changeMachineStatus('${m.id}', this.value)">
+            <select class="status-select status-${m.statut}" onchange="changeMachineStatus('${m.id}', this.value)" ${activeRental ? 'disabled title="Statut automatique tant que la machine est en location"' : ''}>
               ${Object.entries(MACHINE_STATUS_LABELS).map(([value, label]) =>
                 `<option value="${value}" ${m.statut === value ? 'selected' : ''}>${label}</option>`
               ).join('')}
@@ -1430,11 +1451,15 @@
           </div>
           ${m.notes ? `<div class="notes-text">${escapeHtml(m.notes)}</div>` : ''}
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
-    function activeRentalBadge(machineId) {
-      const active = locations.find(l => l.machine_id === machineId && computeStatus(l) === 'en_cours');
+    function getActiveRental(machineId) {
+      return locations.find(l => l.machine_id === machineId && computeStatus(l) === 'en_cours');
+    }
+
+    function activeRentalBadge(active) {
       if (!active) return '';
       const who = active.client ? ` — ${escapeHtml(active.client)}` : '';
       return `<div class="location-submeta" style="margin-top:6px;">

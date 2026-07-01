@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, send_from_directory, session, redirect, render_template_string, Response
 from datetime import datetime, timedelta, date
-from sqlalchemy import create_engine, Column, String, Boolean, MetaData, Table
+from sqlalchemy import create_engine, Column, String, Boolean, MetaData, Table, inspect, text
 import hmac
 import os
 import secrets
@@ -41,7 +41,9 @@ locations_table = Table(
     Column('client_code_ebp', String),
     Column('client_telephone', String),
     Column('date_debut', String),
+    Column('heure_debut', String),
     Column('date_fin', String),
+    Column('heure_fin', String),
     Column('compteur_debut', String),
     Column('compteur_fin', String),
     Column('reglement_recu', Boolean),
@@ -60,6 +62,20 @@ locations_table = Table(
 )
 
 metadata.create_all(engine)
+
+
+def _ensure_columns():
+    inspector = inspect(engine)
+    for table in (machines_table, accessoires_table, locations_table):
+        existing_cols = {col['name'] for col in inspector.get_columns(table.name)}
+        with engine.begin() as conn:
+            for column in table.columns:
+                if column.name not in existing_cols:
+                    col_type = column.type.compile(engine.dialect)
+                    conn.execute(text(f'ALTER TABLE {table.name} ADD COLUMN {column.name} {col_type}'))
+
+
+_ensure_columns()
 
 LIVRAISON_CHOICES = {'retrait_site', 'transporteur', 'gresiloc'}
 MACHINE_STATUS_CHOICES = {'disponible', 'preparation', 'vidange', 'indisponible'}
@@ -271,6 +287,9 @@ def validate_location_payload(data, machines, accessoires, partial=False, curren
         if data.get('date_debut') and data.get('date_fin') and data['date_fin'] < data['date_debut']:
             errors.append('La date de fin doit être postérieure à la date de début')
 
+    if not partial and data.get('date_debut') and data['date_debut'] < date.today().isoformat():
+        errors.append('La date de début ne peut pas être dans le passé')
+
     if 'livraison' in data and data['livraison'] not in LIVRAISON_CHOICES:
         errors.append('Mode de livraison invalide')
 
@@ -326,6 +345,10 @@ def build_vevent(loc):
     summary = title + (f" - {loc['client']}" if loc.get('client') else '')
 
     description_parts = []
+    if loc.get('heure_debut'):
+        description_parts.append(f"Heure de début : {loc['heure_debut']}")
+    if loc.get('heure_fin'):
+        description_parts.append(f"Heure de fin : {loc['heure_fin']}")
     if loc.get('machine_nom'):
         description_parts.append(f"Machine : {loc['machine_nom']} (SN {loc['machine_numero_serie']})")
     if loc.get('client'):
@@ -420,6 +443,15 @@ def calendar_feed():
 @app.route('/api/machines', methods=['GET'])
 def get_machines():
     machines = load_machines()
+    locations = load_locations()
+    today = date.today().isoformat()
+    rented_machine_ids = {
+        l['machine_id'] for l in locations
+        if l.get('machine_id') and l['date_debut'] <= today <= l['date_fin']
+    }
+    for m in machines:
+        if m['id'] in rented_machine_ids:
+            m['statut'] = 'indisponible'
     machines.sort(key=lambda m: m.get('nom', '').lower())
     return jsonify(machines)
 
@@ -560,7 +592,9 @@ def create_location():
         'client_code_ebp': data.get('client_code_ebp', '').strip(),
         'client_telephone': data.get('client_telephone', '').strip(),
         'date_debut': data['date_debut'],
+        'heure_debut': data.get('heure_debut', '').strip(),
         'date_fin': data['date_fin'],
+        'heure_fin': data.get('heure_fin', '').strip(),
         'compteur_debut': str(data.get('compteur_debut', '')).strip(),
         'compteur_fin': str(data.get('compteur_fin', '')).strip(),
         'reglement_recu': bool(data.get('reglement_recu', False)),
@@ -611,8 +645,12 @@ def update_location(location_id):
         location['client_telephone'] = data['client_telephone'].strip()
     if 'date_debut' in data and data['date_debut']:
         location['date_debut'] = data['date_debut']
+    if 'heure_debut' in data:
+        location['heure_debut'] = data['heure_debut'].strip()
     if 'date_fin' in data and data['date_fin']:
         location['date_fin'] = data['date_fin']
+    if 'heure_fin' in data:
+        location['heure_fin'] = data['heure_fin'].strip()
     if 'compteur_debut' in data:
         location['compteur_debut'] = str(data['compteur_debut']).strip()
     if 'compteur_fin' in data:
