@@ -3,4 +3,7 @@ __pycache__/
 *.pyo
 .venv/
 venv/
-todos.json
+locations.json
+machines.json
+accessoires.json
+data.db
