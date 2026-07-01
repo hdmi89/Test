@@ -962,7 +962,23 @@
           select.value = current;
         }
       });
+      refreshAccessoireOptions();
     }
+
+    function refreshAccessoireOptions() {
+      const selects = [1, 2, 3].map(slot => document.getElementById(`accessoire${slot}Select`));
+      const selectedValues = selects.map(s => s.value);
+      selects.forEach((select, idx) => {
+        Array.from(select.options).forEach(opt => {
+          if (!opt.value) { opt.disabled = false; return; }
+          opt.disabled = selectedValues.some((v, otherIdx) => otherIdx !== idx && v === opt.value);
+        });
+      });
+    }
+
+    [1, 2, 3].forEach(slot => {
+      document.getElementById(`accessoire${slot}Select`).addEventListener('change', refreshAccessoireOptions);
+    });
 
     const addAccessoireBtn = document.getElementById('addAccessoireBtn');
     let visibleAccessoireSlots = 1;
@@ -996,6 +1012,7 @@
       document.getElementById('accessoire1Select').value = loc.accessoire1_id || '';
       document.getElementById('accessoire2Select').value = loc.accessoire2_id || '';
       document.getElementById('accessoire3Select').value = loc.accessoire3_id || '';
+      refreshAccessoireOptions();
       setAccessoireVisibility(loc.accessoire3_id ? 3 : (loc.accessoire2_id ? 2 : 1));
       document.getElementById('client').value = loc.client;
       document.getElementById('clientCodeEbp').value = loc.client_code_ebp || '';

@@ -245,9 +245,20 @@ def validate_location_payload(data, machines, accessoires, partial=False, curren
                     accessoire_results[slot] = found
 
     final_machine_id = data['machine_id'] if 'machine_id' in data else (current.get('machine_id', '') if current else '')
-    final_accessoire1_id = data['accessoire1_id'] if 'accessoire1_id' in data else (current.get('accessoire1_id', '') if current else '')
-    if not final_machine_id and not final_accessoire1_id:
+    final_accessoire_ids = []
+    for slot in (1, 2, 3):
+        field = f'accessoire{slot}_id'
+        if field in data:
+            final_accessoire_ids.append(data[field])
+        else:
+            final_accessoire_ids.append(current.get(field, '') if current else '')
+
+    if not final_machine_id and not final_accessoire_ids[0]:
         errors.append('Renseignez au moins une machine ou un accessoire')
+
+    non_empty = [v for v in final_accessoire_ids if v]
+    if len(non_empty) != len(set(non_empty)):
+        errors.append("Un accessoire ne peut être sélectionné qu'une seule fois")
 
     return errors, machine, accessoire_results
 
