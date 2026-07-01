@@ -1,16 +1,65 @@
 from flask import Flask, jsonify, request, send_from_directory, session, redirect, render_template_string, Response
 from datetime import datetime, timedelta, date
+from sqlalchemy import create_engine, Column, String, Boolean, MetaData, Table
 import hmac
-import json
 import os
 import secrets
 import uuid
 
 app = Flask(__name__, static_folder='static')
 
-MACHINES_FILE = 'machines.json'
-LOCATIONS_FILE = 'locations.json'
-ACCESSOIRES_FILE = 'accessoires.json'
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///data.db')
+if DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+
+engine = create_engine(DATABASE_URL)
+metadata = MetaData()
+
+machines_table = Table(
+    'machines', metadata,
+    Column('id', String, primary_key=True),
+    Column('nom', String),
+    Column('numero_serie', String),
+    Column('statut', String),
+    Column('notes', String),
+)
+
+accessoires_table = Table(
+    'accessoires', metadata,
+    Column('id', String, primary_key=True),
+    Column('nom', String),
+    Column('notes', String),
+)
+
+locations_table = Table(
+    'locations', metadata,
+    Column('id', String, primary_key=True),
+    Column('machine_id', String),
+    Column('machine_nom', String),
+    Column('machine_numero_serie', String),
+    Column('client', String),
+    Column('client_code_ebp', String),
+    Column('client_telephone', String),
+    Column('date_debut', String),
+    Column('date_fin', String),
+    Column('compteur_debut', String),
+    Column('compteur_fin', String),
+    Column('reglement_recu', Boolean),
+    Column('caution_ok', Boolean),
+    Column('assurance_ok', Boolean),
+    Column('livraison', String),
+    Column('statut_ebp', String),
+    Column('referent', String),
+    Column('accessoire1_id', String),
+    Column('accessoire1_nom', String),
+    Column('accessoire2_id', String),
+    Column('accessoire2_nom', String),
+    Column('accessoire3_id', String),
+    Column('accessoire3_nom', String),
+    Column('notes', String),
+)
+
+metadata.create_all(engine)
 
 LIVRAISON_CHOICES = {'retrait_site', 'transporteur', 'gresiloc'}
 MACHINE_STATUS_CHOICES = {'disponible', 'preparation', 'vidange', 'indisponible'}
@@ -136,40 +185,41 @@ LOGIN_PAGE = """
 """
 
 
-def load_json(path):
-    if not os.path.exists(path):
-        return []
-    with open(path, 'r') as f:
-        return json.load(f)
+def _load_table(table):
+    with engine.connect() as conn:
+        rows = conn.execute(table.select()).mappings().all()
+        return [dict(row) for row in rows]
 
 
-def save_json(path, data):
-    with open(path, 'w') as f:
-        json.dump(data, f, indent=2)
+def _save_table(table, records):
+    with engine.begin() as conn:
+        conn.execute(table.delete())
+        if records:
+            conn.execute(table.insert(), records)
 
 
 def load_machines():
-    return load_json(MACHINES_FILE)
+    return _load_table(machines_table)
 
 
 def save_machines(machines):
-    save_json(MACHINES_FILE, machines)
+    _save_table(machines_table, machines)
 
 
 def load_locations():
-    return load_json(LOCATIONS_FILE)
+    return _load_table(locations_table)
 
 
 def save_locations(locations):
-    save_json(LOCATIONS_FILE, locations)
+    _save_table(locations_table, locations)
 
 
 def load_accessoires():
-    return load_json(ACCESSOIRES_FILE)
+    return _load_table(accessoires_table)
 
 
 def save_accessoires(accessoires):
-    save_json(ACCESSOIRES_FILE, accessoires)
+    _save_table(accessoires_table, accessoires)
 
 
 def validate_machine_payload(data, machines, machine_id=None, partial=False):

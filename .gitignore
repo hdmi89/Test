@@ -6,3 +6,4 @@ venv/
 locations.json
 machines.json
 accessoires.json
+data.db
