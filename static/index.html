@@ -321,6 +321,12 @@
       display: none;
     }
 
+    .hint {
+      font-size: 0.8rem;
+      color: var(--color-text-subtle);
+      margin-top: -6px;
+    }
+
     /* ---- Filters ---- */
     .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
 
@@ -577,9 +583,26 @@
             <h2 id="formTitle">Nouvelle location</h2>
             <form class="form-grid" id="locationForm">
               <div class="field">
-                <label for="machineSelect">Machine *</label>
+                <label for="machineSelect">Machine</label>
                 <select id="machineSelect"></select>
               </div>
+              <div class="field" id="accessoire1Field">
+                <label for="accessoire1Select">Accessoire</label>
+                <select id="accessoire1Select"></select>
+              </div>
+              <div class="field" id="accessoire2Field" style="display:none;">
+                <label for="accessoire2Select">Accessoire 2</label>
+                <select id="accessoire2Select"></select>
+              </div>
+              <div class="field" id="accessoire3Field" style="display:none;">
+                <label for="accessoire3Select">Accessoire 3</label>
+                <select id="accessoire3Select"></select>
+              </div>
+              <div class="field" id="addAccessoireField">
+                <label>&nbsp;</label>
+                <button type="button" class="btn-secondary" id="addAccessoireBtn">+ Ajouter un accessoire</button>
+              </div>
+              <p class="hint" style="grid-column: 1 / -1;">Renseignez au moins une machine ou un accessoire.</p>
               <div class="field">
                 <label for="client">Client</label>
                 <input type="text" id="client" placeholder="Nom du client" autocomplete="off" />
@@ -632,18 +655,6 @@
                   <option value="jeremie">Jérémie</option>
                   <option value="sebastien">Sébastien</option>
                 </select>
-              </div>
-              <div class="field">
-                <label for="accessoire1Select">Accessoire 1</label>
-                <select id="accessoire1Select"></select>
-              </div>
-              <div class="field">
-                <label for="accessoire2Select">Accessoire 2</label>
-                <select id="accessoire2Select"></select>
-              </div>
-              <div class="field">
-                <label for="accessoire3Select">Accessoire 3</label>
-                <select id="accessoire3Select"></select>
               </div>
               <div class="field">
                 <label for="notes">Notes</label>
@@ -929,12 +940,11 @@
     }
 
     function populateMachineSelect() {
-      if (machines.length === 0) {
-        machineSelect.innerHTML = '<option value="">Aucune machine - créez-en une dans "Parc machine"</option>';
-        return;
-      }
       const current = machineSelect.value;
-      machineSelect.innerHTML = machines.map(m =>
+      const placeholder = machines.length === 0
+        ? 'Aucune machine (accessoire seul) - créez-en une dans "Parc machine"'
+        : 'Aucune machine (accessoire seul)';
+      machineSelect.innerHTML = `<option value="">${placeholder}</option>` + machines.map(m =>
         `<option value="${m.id}">${escapeHtml(m.nom)} — SN ${escapeHtml(m.numero_serie)} (${MACHINE_STATUS_LABELS[m.statut]})</option>`
       ).join('');
       if (current && machines.some(m => m.id === current)) {
@@ -954,10 +964,24 @@
       });
     }
 
+    const addAccessoireBtn = document.getElementById('addAccessoireBtn');
+    let visibleAccessoireSlots = 1;
+
+    function setAccessoireVisibility(n) {
+      visibleAccessoireSlots = n;
+      document.getElementById('accessoire2Field').style.display = n >= 2 ? '' : 'none';
+      document.getElementById('accessoire3Field').style.display = n >= 3 ? '' : 'none';
+      addAccessoireBtn.style.display = n >= 3 ? 'none' : 'inline-flex';
+      addAccessoireBtn.textContent = n === 1 ? '+ Ajouter un accessoire' : '+ Ajouter un 3ème accessoire';
+    }
+
+    addAccessoireBtn.addEventListener('click', () => setAccessoireVisibility(visibleAccessoireSlots + 1));
+
     function resetLocationForm() {
       locationForm.reset();
       populateMachineSelect();
       populateAccessoireSelects();
+      setAccessoireVisibility(1);
       editingLocationId = null;
       submitBtn.textContent = 'Ajouter';
       formTitle.textContent = 'Nouvelle location';
@@ -967,11 +991,12 @@
 
     function fillLocationForm(loc) {
       populateMachineSelect();
-      machineSelect.value = loc.machine_id;
+      machineSelect.value = loc.machine_id || '';
       populateAccessoireSelects();
       document.getElementById('accessoire1Select').value = loc.accessoire1_id || '';
       document.getElementById('accessoire2Select').value = loc.accessoire2_id || '';
       document.getElementById('accessoire3Select').value = loc.accessoire3_id || '';
+      setAccessoireVisibility(loc.accessoire3_id ? 3 : (loc.accessoire2_id ? 2 : 1));
       document.getElementById('client').value = loc.client;
       document.getElementById('clientCodeEbp').value = loc.client_code_ebp || '';
       document.getElementById('clientTelephone').value = loc.client_telephone || '';
@@ -1088,7 +1113,10 @@
     }
 
     function accessoiresLine(loc) {
-      const noms = [loc.accessoire1_nom, loc.accessoire2_nom, loc.accessoire3_nom].filter(Boolean);
+      const slots = loc.machine_nom
+        ? [loc.accessoire1_nom, loc.accessoire2_nom, loc.accessoire3_nom]
+        : [loc.accessoire2_nom, loc.accessoire3_nom];
+      const noms = slots.filter(Boolean);
       if (noms.length === 0) return '';
       return `<div class="location-compteur">${icon('box')} Accessoires : ${noms.map(escapeHtml).join(', ')}</div>`;
     }
@@ -1131,13 +1159,15 @@
         return;
       }
 
-      list.innerHTML = visible.map(loc => `
+      list.innerHTML = visible.map(loc => {
+        const title = loc.machine_nom || loc.accessoire1_nom || 'Location';
+        return `
         <div class="location-item">
           <div class="location-top">
             <div>
-              <div class="location-title">${escapeHtml(loc.machine_nom)}</div>
+              <div class="location-title">${escapeHtml(title)}</div>
               <div class="location-submeta">
-                <span class="meta-chip">${icon('tag')} SN ${escapeHtml(loc.machine_numero_serie)}</span>
+                ${loc.machine_nom ? `<span class="meta-chip">${icon('tag')} SN ${escapeHtml(loc.machine_numero_serie)}</span>` : ''}
                 ${loc.client ? `<span class="meta-chip">${icon('user')} ${escapeHtml(loc.client)}</span>` : ''}
                 ${loc.client_code_ebp ? `<span class="meta-chip">${icon('tag')} ${escapeHtml(loc.client_code_ebp)}</span>` : ''}
                 ${loc.client_telephone ? `<span class="meta-chip">${icon('phone')} ${escapeHtml(loc.client_telephone)}</span>` : ''}
@@ -1177,7 +1207,8 @@
           </div>
           ${loc.notes ? `<div class="notes-text">${escapeHtml(loc.notes)}</div>` : ''}
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     // ================= Machines =================

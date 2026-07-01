@@ -201,14 +201,13 @@ def validate_accessoire_payload(data, partial=False):
     return errors
 
 
-def validate_location_payload(data, machines, accessoires, partial=False):
+def validate_location_payload(data, machines, accessoires, partial=False, current=None):
     errors = []
 
     def required(field, label):
         if not partial and not str(data.get(field, '')).strip():
             errors.append(f'{label} est requis')
 
-    required('machine_id', 'La machine')
     required('date_debut', 'La date de début')
     required('date_fin', 'La date de fin')
 
@@ -245,6 +244,11 @@ def validate_location_payload(data, machines, accessoires, partial=False):
                 else:
                     accessoire_results[slot] = found
 
+    final_machine_id = data['machine_id'] if 'machine_id' in data else (current.get('machine_id', '') if current else '')
+    final_accessoire1_id = data['accessoire1_id'] if 'accessoire1_id' in data else (current.get('accessoire1_id', '') if current else '')
+    if not final_machine_id and not final_accessoire1_id:
+        errors.append('Renseignez au moins une machine ou un accessoire')
+
     return errors, machine, accessoire_results
 
 
@@ -256,9 +260,13 @@ def build_vevent(loc):
     start = loc['date_debut'].replace('-', '')
     end_date = date.fromisoformat(loc['date_fin']) + timedelta(days=1)
     end = end_date.strftime('%Y%m%d')
-    summary = loc['machine_nom'] + (f" - {loc['client']}" if loc.get('client') else '')
+    accessoire1_nom = loc.get('accessoire1_nom')
+    title = loc.get('machine_nom') or accessoire1_nom or 'Location'
+    summary = title + (f" - {loc['client']}" if loc.get('client') else '')
 
-    description_parts = [f"Machine : {loc['machine_nom']} (SN {loc['machine_numero_serie']})"]
+    description_parts = []
+    if loc.get('machine_nom'):
+        description_parts.append(f"Machine : {loc['machine_nom']} (SN {loc['machine_numero_serie']})")
     if loc.get('client'):
         description_parts.append(f"Client : {loc['client']}")
     if loc.get('client_code_ebp'):
@@ -484,9 +492,9 @@ def create_location():
 
     location = {
         'id': str(uuid.uuid4()),
-        'machine_id': machine['id'],
-        'machine_nom': machine['nom'],
-        'machine_numero_serie': machine['numero_serie'],
+        'machine_id': machine['id'] if machine else '',
+        'machine_nom': machine['nom'] if machine else '',
+        'machine_numero_serie': machine['numero_serie'] if machine else '',
         'client': data.get('client', '').strip(),
         'client_code_ebp': data.get('client_code_ebp', '').strip(),
         'client_telephone': data.get('client_telephone', '').strip(),
@@ -523,14 +531,14 @@ def update_location(location_id):
     machines = load_machines()
     accessoires = load_accessoires()
     data = request.get_json() or {}
-    errors, machine, accessoire_results = validate_location_payload(data, machines, accessoires, partial=True)
+    errors, machine, accessoire_results = validate_location_payload(data, machines, accessoires, partial=True, current=location)
     if errors:
         return jsonify({'error': '; '.join(errors)}), 400
 
-    if machine is not None:
-        location['machine_id'] = machine['id']
-        location['machine_nom'] = machine['nom']
-        location['machine_numero_serie'] = machine['numero_serie']
+    if 'machine_id' in data:
+        location['machine_id'] = machine['id'] if machine else ''
+        location['machine_nom'] = machine['nom'] if machine else ''
+        location['machine_numero_serie'] = machine['numero_serie'] if machine else ''
     for slot, found in accessoire_results.items():
         location[f'accessoire{slot}_id'] = found['id'] if found else ''
         location[f'accessoire{slot}_nom'] = found['nom'] if found else ''
