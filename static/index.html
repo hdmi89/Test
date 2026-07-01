@@ -327,6 +327,66 @@
       margin-top: -6px;
     }
 
+    /* ---- Modal ---- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 20px;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal-card {
+      background: var(--color-surface);
+      border-radius: var(--radius);
+      max-width: 560px;
+      width: 100%;
+      max-height: 82vh;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .modal-header h2 { font-size: 1.05rem; font-weight: 700; color: var(--color-text); }
+    .modal-header p { font-size: 0.83rem; color: var(--color-text-muted); margin-top: 2px; }
+
+    .modal-section-title {
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--color-text-muted);
+      margin: 18px 0 8px;
+    }
+
+    .modal-section-title:first-of-type { margin-top: 4px; }
+
+    .modal-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--color-border);
+      font-size: 0.85rem;
+    }
+
+    .modal-row:last-child { border-bottom: none; }
+    .modal-row-client { font-weight: 600; color: var(--color-text); }
+    .modal-row-dates { color: var(--color-text-muted); font-size: 0.82rem; margin-top: 1px; }
+
     /* ---- Filters ---- */
     .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
 
@@ -785,6 +845,19 @@
       <button class="nav-link" data-tab="machines" id="navMachinesMobile"></button>
       <button class="nav-link" data-tab="accessoires" id="navAccessoiresMobile"></button>
     </nav>
+
+    <div class="modal-overlay" id="machineHistoryModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <h2 id="machineHistoryTitle"></h2>
+            <p id="machineHistorySubtitle"></p>
+          </div>
+          <button class="icon-btn" id="machineHistoryCloseBtn" title="Fermer"></button>
+        </div>
+        <div id="machineHistoryBody"></div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -807,6 +880,8 @@
       check: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
       square: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>',
       toolbox: '<svg class="icon" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="2" y1="13" x2="22" y2="13"/><line x1="10" y1="13" x2="14" y2="13"/></svg>',
+      close: '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+      history: '<svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
     };
 
     function icon(name, size) {
@@ -829,6 +904,7 @@
     document.getElementById('navAccessoiresMobile').innerHTML = icon('wrench', 19) + '<span>Accessoires</span>';
     document.getElementById('calendarLabel').innerHTML = icon('link') + 'Abonnement Google Agenda :';
     document.getElementById('copyFeedBtn').innerHTML = icon('copy') + 'Copier le lien';
+    document.getElementById('machineHistoryCloseBtn').innerHTML = icon('close');
 
     const LOCATIONS_API = '/api/locations';
     const MACHINES_API = '/api/machines';
@@ -937,6 +1013,7 @@
       const res = await fetch(LOCATIONS_API);
       locations = await res.json();
       renderLocations();
+      renderMachines();
     }
 
     function populateMachineSelect() {
@@ -1337,6 +1414,7 @@
               <div class="location-submeta">
                 <span class="meta-chip">${icon('tag')} SN ${escapeHtml(m.numero_serie)}</span>
               </div>
+              ${activeRentalBadge(m.id)}
             </div>
             <select class="status-select status-${m.statut}" onchange="changeMachineStatus('${m.id}', this.value)">
               ${Object.entries(MACHINE_STATUS_LABELS).map(([value, label]) =>
@@ -1346,6 +1424,7 @@
           </div>
           <div class="location-meta">
             <span class="spacer"></span>
+            <button class="icon-btn" onclick="openMachineHistory('${m.id}')" title="Historique des locations">${icon('history')}</button>
             <button class="icon-btn" onclick="startEditMachine('${m.id}')" title="Modifier">${icon('edit')}</button>
             <button class="icon-btn delete" onclick="deleteMachine('${m.id}')" title="Supprimer">${icon('trash')}</button>
           </div>
@@ -1353,6 +1432,67 @@
         </div>
       `).join('');
     }
+
+    function activeRentalBadge(machineId) {
+      const active = locations.find(l => l.machine_id === machineId && computeStatus(l) === 'en_cours');
+      if (!active) return '';
+      const who = active.client ? ` — ${escapeHtml(active.client)}` : '';
+      return `<div class="location-submeta" style="margin-top:6px;">
+        <span class="pill pill-indisponible">${icon('calendar', 13)} En location${who} jusqu'au ${formatDate(active.date_fin)}</span>
+      </div>`;
+    }
+
+    function openMachineHistory(machineId) {
+      const machine = machines.find(m => m.id === machineId);
+      if (!machine) return;
+
+      const machineLocations = locations
+        .filter(l => l.machine_id === machineId)
+        .map(l => ({ ...l, status: computeStatus(l) }))
+        .sort((a, b) => a.date_debut.localeCompare(b.date_debut));
+
+      document.getElementById('machineHistoryTitle').textContent = machine.nom;
+      document.getElementById('machineHistorySubtitle').textContent = `SN ${machine.numero_serie}`;
+
+      const groups = [
+        { key: 'en_cours', label: 'En cours' },
+        { key: 'a_venir', label: 'À venir' },
+        { key: 'terminee', label: 'Passées' },
+      ];
+
+      const sections = groups.map(g => {
+        const items = machineLocations.filter(l => l.status === g.key);
+        if (items.length === 0) return '';
+        return `
+          <div class="modal-section-title">${g.label} (${items.length})</div>
+          ${items.map(l => `
+            <div class="modal-row">
+              <div>
+                <div class="modal-row-client">${escapeHtml(l.client || 'Sans client')}</div>
+                <div class="modal-row-dates">${formatDate(l.date_debut)} → ${formatDate(l.date_fin)}</div>
+              </div>
+              <span class="pill pill-${l.status}">${STATUS_LABELS[l.status]}</span>
+            </div>
+          `).join('')}
+        `;
+      }).join('');
+
+      document.getElementById('machineHistoryBody').innerHTML = sections ||
+        '<p class="hint">Aucune location enregistrée pour cette machine.</p>';
+      document.getElementById('machineHistoryModal').classList.add('active');
+    }
+
+    function closeMachineHistoryModal() {
+      document.getElementById('machineHistoryModal').classList.remove('active');
+    }
+
+    document.getElementById('machineHistoryCloseBtn').addEventListener('click', closeMachineHistoryModal);
+    document.getElementById('machineHistoryModal').addEventListener('click', e => {
+      if (e.target.id === 'machineHistoryModal') closeMachineHistoryModal();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeMachineHistoryModal();
+    });
 
     // ================= Accessoires =================
 
