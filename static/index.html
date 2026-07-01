@@ -3,590 +3,822 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gestion du parc machine - Location</title>
+  <title>Parc Machine — Gestion des locations</title>
   <style>
+    :root {
+      --color-primary: #2563eb;
+      --color-primary-dark: #1d4ed8;
+      --color-primary-light: #eff6ff;
+      --color-bg: #f8fafc;
+      --color-surface: #ffffff;
+      --color-border: #e2e8f0;
+      --color-text: #0f172a;
+      --color-text-muted: #64748b;
+      --color-text-subtle: #94a3b8;
+      --color-success-bg: #dcfce7;
+      --color-success-text: #166534;
+      --color-success-border: #86efac;
+      --color-warning-bg: #fef3c7;
+      --color-warning-text: #92400e;
+      --color-warning-border: #fcd34d;
+      --color-info-bg: #e0e7ff;
+      --color-info-text: #3730a3;
+      --color-info-border: #a5b4fc;
+      --color-danger-bg: #fee2e2;
+      --color-danger-text: #991b1b;
+      --color-danger-border: #fca5a5;
+      --color-neutral-bg: #f1f5f9;
+      --color-neutral-text: #475569;
+      --radius: 10px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+      --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f2f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
       min-height: 100vh;
-      padding: 32px 16px 64px;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .container {
-      width: 100%;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
+    .icon { display: inline-block; vertical-align: middle; flex-shrink: 0; }
 
-    h1 {
-      font-size: 1.9rem;
-      font-weight: 700;
-      color: #1a1a2e;
-      margin-bottom: 4px;
-    }
+    /* ---- App shell ---- */
+    .app-shell { display: flex; flex-direction: column; min-height: 100vh; }
 
-    .subtitle {
-      color: #6b7280;
-      margin-bottom: 24px;
-      font-size: 0.95rem;
-    }
-
-    .tabs {
+    .sidebar {
+      width: 244px;
+      flex-shrink: 0;
+      background: var(--color-surface);
+      border-right: 1px solid var(--color-border);
+      padding: 22px 14px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 24px;
-      border-bottom: 2px solid #e5e7eb;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 30;
     }
 
-    .tab-btn {
-      padding: 10px 20px;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 8px 24px;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: var(--color-primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .brand-title { font-size: 0.95rem; font-weight: 700; color: var(--color-text); line-height: 1.2; }
+    .brand-subtitle { font-size: 0.75rem; color: var(--color-text-subtle); }
+
+    .sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      color: var(--color-text-muted);
+      font-weight: 600;
+      font-size: 0.87rem;
+      text-decoration: none;
       background: none;
       border: none;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #6b7280;
       cursor: pointer;
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
-      transition: color 0.2s, border-color 0.2s;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+      transition: background 0.15s, color 0.15s;
     }
 
-    .tab-btn:hover { color: #4338ca; }
-    .tab-btn.active { color: #6366f1; border-color: #6366f1; }
+    .nav-link:hover { background: var(--color-bg); color: var(--color-text); }
+    .nav-link.active { background: var(--color-primary-light); color: var(--color-primary); }
+    .nav-link .icon { color: inherit; }
 
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+    .sidebar-footer {
+      border-top: 1px solid var(--color-border);
+      padding-top: 12px;
+      margin-top: 12px;
+    }
 
+    /* ---- Mobile top bar ---- */
+    .mobile-topbar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .mobile-topbar .brand { padding: 0; }
+
+    .icon-btn-outline {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-muted);
+      background: var(--color-surface);
+      text-decoration: none;
+    }
+
+    .icon-btn-outline:hover { color: var(--color-danger-text); border-color: var(--color-danger-border); background: var(--color-danger-bg); }
+
+    /* ---- Bottom nav (mobile) ---- */
+    .bottom-nav {
+      display: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--color-surface);
+      border-top: 1px solid var(--color-border);
+      z-index: 30;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .bottom-nav .nav-link {
+      flex: 1;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 0.66rem;
+      padding: 8px 2px 7px;
+      border-radius: 0;
+      text-align: center;
+      align-items: center;
+    }
+
+    .bottom-nav .nav-link.active { background: none; }
+
+    /* ---- Main content ---- */
+    .main { margin-left: 244px; flex: 1; min-width: 0; padding: 32px 40px 56px; }
+    .content { max-width: 1080px; margin: 0 auto; }
+
+    .page-header { margin-bottom: 22px; }
+    .page-header h1 { font-size: 1.4rem; font-weight: 700; color: var(--color-text); margin-bottom: 3px; }
+    .page-header p { color: var(--color-text-muted); font-size: 0.87rem; }
+
+    /* ---- Stat tiles ---- */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-tile {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+
+    .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--color-text); line-height: 1.2; }
+    .stat-label { font-size: 0.78rem; color: var(--color-text-muted); margin-top: 2px; }
+
+    /* ---- Cards ---- */
     .card {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-      padding: 20px 24px;
-      margin-bottom: 24px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      margin-bottom: 20px;
     }
 
-    .card h2 {
-      font-size: 1.1rem;
-      color: #1a1a2e;
-      margin-bottom: 16px;
-    }
+    .card h2 { font-size: 1rem; font-weight: 700; color: var(--color-text); margin-bottom: 18px; }
 
+    /* ---- Forms ---- */
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px;
     }
 
-    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 
     .field label {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #4b5563;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
 
     .field input[type="text"],
     .field input[type="number"],
     .field input[type="date"],
     .field select {
-      padding: 10px 12px;
-      border: 2px solid #e5e7eb;
+      width: 100%;
+      min-width: 0;
+      padding: 9px 11px;
+      border: 1px solid var(--color-border);
       border-radius: 8px;
-      font-size: 0.95rem;
+      font-size: 0.88rem;
       outline: none;
-      transition: border-color 0.2s;
-      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      background: var(--color-surface);
+      color: var(--color-text);
       font-family: inherit;
+      height: 38px;
     }
 
-    .field input:focus, .field select:focus { border-color: #6366f1; }
+    .field input:focus, .field select:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
 
     .checks {
       grid-column: 1 / -1;
       display: flex;
       flex-wrap: wrap;
       gap: 18px;
-      padding-top: 4px;
+      padding-top: 2px;
     }
 
     .check-item {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.9rem;
-      color: #374151;
+      font-size: 0.87rem;
+      color: var(--color-text);
+      font-weight: 500;
     }
 
-    .check-item input { width: 18px; height: 18px; accent-color: #6366f1; cursor: pointer; }
+    .check-item input { width: 17px; height: 17px; accent-color: var(--color-primary); cursor: pointer; }
 
     .form-actions {
       grid-column: 1 / -1;
       display: flex;
       gap: 10px;
-      margin-top: 6px;
+      margin-top: 4px;
     }
 
-    button {
-      font-family: inherit;
-      cursor: pointer;
-    }
+    button { font-family: inherit; cursor: pointer; }
 
     .btn-primary {
-      padding: 11px 22px;
-      background: #6366f1;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--color-primary);
       color: #fff;
       border: none;
       border-radius: 8px;
-      font-size: 0.95rem;
+      font-size: 0.88rem;
       font-weight: 600;
-      transition: background 0.2s;
+      transition: background 0.15s;
     }
 
-    .btn-primary:hover { background: #4f46e5; }
+    .btn-primary:hover { background: var(--color-primary-dark); }
 
     .btn-secondary {
-      padding: 11px 18px;
-      background: #fff;
-      color: #6b7280;
-      border: 2px solid #e5e7eb;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--color-surface);
+      color: var(--color-text-muted);
+      border: 1px solid var(--color-border);
       border-radius: 8px;
-      font-size: 0.95rem;
+      font-size: 0.88rem;
       font-weight: 600;
     }
 
-    .btn-secondary:hover { background: #f3f4f6; }
+    .btn-secondary:hover { background: var(--color-bg); color: var(--color-text); }
 
     .error-msg {
       grid-column: 1 / -1;
-      color: #dc2626;
-      font-size: 0.85rem;
+      color: var(--color-danger-text);
+      background: var(--color-danger-bg);
+      border: 1px solid var(--color-danger-border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 0.83rem;
       display: none;
     }
 
-    .filters {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
+    /* ---- Filters ---- */
+    .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
 
     .filter-btn {
       padding: 6px 14px;
-      border: 2px solid #e5e7eb;
+      border: 1px solid var(--color-border);
       border-radius: 20px;
-      background: #fff;
-      color: #6b7280;
-      font-size: 0.85rem;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-
-    .filter-btn.active {
-      border-color: #6366f1;
-      background: #6366f1;
-      color: #fff;
-    }
-
-    .location-list, .machine-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .location-item, .machine-item {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-      padding: 16px 20px;
-      transition: box-shadow 0.2s;
-    }
-
-    .location-item:hover, .machine-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
-    .location-top, .machine-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .location-title, .machine-title { font-size: 1.05rem; font-weight: 700; color: #111827; }
-    .location-client, .machine-serial { font-size: 0.85rem; color: #6b7280; margin-top: 2px; }
-
-    .status-badge {
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      white-space: nowrap;
-      height: fit-content;
-    }
-
-    .status-a_venir { background: #e0e7ff; color: #4338ca; }
-    .status-en_cours { background: #d1fae5; color: #065f46; }
-    .status-terminee { background: #f3f4f6; color: #6b7280; }
-
-    .status-disponible { background: #d1fae5; color: #065f46; }
-    .status-preparation { background: #e0e7ff; color: #4338ca; }
-    .status-vidange { background: #fef3c7; color: #92400e; }
-    .status-indisponible { background: #fee2e2; color: #b91c1c; }
-
-    .location-dates, .location-compteur {
-      font-size: 0.88rem;
-      color: #374151;
-      margin-bottom: 6px;
-    }
-
-    .location-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 18px;
-      align-items: center;
-      padding-top: 10px;
-      margin-top: 6px;
-      border-top: 1px solid #f3f4f6;
-    }
-
-    .toggle-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      background: var(--color-surface);
+      color: var(--color-text-muted);
       font-size: 0.82rem;
-      padding: 5px 10px;
-      border-radius: 8px;
-      border: 2px solid #e5e7eb;
-      color: #9ca3af;
-      cursor: pointer;
+      font-weight: 600;
       transition: all 0.15s;
-      background: #fff;
     }
 
-    .toggle-badge.ok {
-      border-color: #34d399;
-      background: #ecfdf5;
-      color: #047857;
-    }
+    .filter-btn.active { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
 
-    .delivery-badge {
-      font-size: 0.82rem;
-      padding: 5px 10px;
-      border-radius: 8px;
-      background: #fef3c7;
-      color: #92400e;
-      font-weight: 600;
-    }
-
-    .status-select {
-      padding: 5px 10px;
-      border-radius: 8px;
-      border: 2px solid #e5e7eb;
-      font-size: 0.82rem;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-      background: #fff;
-      color: #374151;
-    }
-
-    select.status-select.status-disponible { background: #d1fae5; color: #065f46; border-color: #34d399; }
-    select.status-select.status-preparation { background: #e0e7ff; color: #4338ca; border-color: #818cf8; }
-    select.status-select.status-vidange { background: #fef3c7; color: #92400e; border-color: #fbbf24; }
-    select.status-select.status-indisponible { background: #fee2e2; color: #b91c1c; border-color: #f87171; }
-
-    select.status-select.ebp-a_creer_ebp { background: #fef3c7; color: #92400e; border-color: #fbbf24; }
-    select.status-select.ebp-a_facturer_ebp { background: #e0e7ff; color: #4338ca; border-color: #818cf8; }
-    select.status-select.ebp-hors_radar { background: #f3f4f6; color: #6b7280; border-color: #d1d5db; }
-
-    .header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-    }
-
-    .logout-link {
-      font-size: 0.85rem;
-      color: #6b7280;
-      text-decoration: none;
-      padding: 6px 12px;
-      border: 2px solid #e5e7eb;
-      border-radius: 8px;
-      white-space: nowrap;
-    }
-
-    .logout-link:hover { color: #ef4444; border-color: #fca5a5; background: #fff; }
-
+    /* ---- Calendar feed card ---- */
     .calendar-card {
       display: flex;
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
       font-size: 0.85rem;
-      color: #6b7280;
+      color: var(--color-text-muted);
     }
+
+    .calendar-card .calendar-label { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--color-text); white-space: nowrap; }
 
     .calendar-card input {
       flex: 1;
       min-width: 220px;
       padding: 8px 10px;
-      border: 2px solid #e5e7eb;
+      border: 1px solid var(--color-border);
       border-radius: 8px;
-      font-size: 0.82rem;
-      color: #374151;
-      background: #f9fafb;
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      background: var(--color-bg);
+      font-family: ui-monospace, monospace;
+    }
+
+    /* ---- Lists ---- */
+    .location-list, .item-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .location-item, .item-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+
+    .location-item:hover, .item-card:hover { box-shadow: var(--shadow-sm); border-color: #cbd5e1; }
+
+    .location-top, .item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .location-title, .item-title { font-size: 1rem; font-weight: 700; color: var(--color-text); }
+
+    .location-submeta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 14px;
+      margin-top: 4px;
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+    }
+
+    .meta-chip .icon { color: var(--color-text-subtle); }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 11px;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      white-space: nowrap;
+      height: fit-content;
+      border: 1px solid transparent;
+    }
+
+    .pill-a_venir, .pill-preparation, .pill-a_facturer_ebp { background: var(--color-info-bg); color: var(--color-info-text); border-color: var(--color-info-border); }
+    .pill-en_cours, .pill-disponible { background: var(--color-success-bg); color: var(--color-success-text); border-color: var(--color-success-border); }
+    .pill-terminee, .pill-hors_radar { background: var(--color-neutral-bg); color: var(--color-neutral-text); }
+    .pill-vidange, .pill-a_creer_ebp { background: var(--color-warning-bg); color: var(--color-warning-text); border-color: var(--color-warning-border); }
+    .pill-indisponible { background: var(--color-danger-bg); color: var(--color-danger-text); border-color: var(--color-danger-border); }
+
+    .location-dates, .location-compteur {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.85rem;
+      color: var(--color-text);
+      margin-bottom: 4px;
+    }
+
+    .location-dates .icon, .location-compteur .icon { color: var(--color-text-subtle); }
+
+    .location-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding-top: 12px;
+      margin-top: 10px;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .status-select {
+      padding: 5px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--color-border);
+      font-size: 0.78rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      background: var(--color-surface);
+      color: var(--color-text-muted);
+    }
+
+    select.status-select.status-disponible, select.status-select.ebp-a_facturer_ebp { background: var(--color-success-bg); color: var(--color-success-text); border-color: var(--color-success-border); }
+    select.status-select.status-preparation { background: var(--color-info-bg); color: var(--color-info-text); border-color: var(--color-info-border); }
+    select.status-select.status-vidange, select.status-select.ebp-a_creer_ebp { background: var(--color-warning-bg); color: var(--color-warning-text); border-color: var(--color-warning-border); }
+    select.status-select.status-indisponible { background: var(--color-danger-bg); color: var(--color-danger-text); border-color: var(--color-danger-border); }
+    select.status-select.ebp-hors_radar { background: var(--color-neutral-bg); color: var(--color-neutral-text); border-color: var(--color-border); }
+
+    .toggle-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: 20px;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-subtle);
+      cursor: pointer;
+      transition: all 0.15s;
+      background: var(--color-surface);
+    }
+
+    .toggle-badge.ok { border-color: var(--color-success-border); background: var(--color-success-bg); color: var(--color-success-text); }
+    .toggle-badge .icon { flex-shrink: 0; }
+
+    .delivery-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: 20px;
+      background: var(--color-warning-bg);
+      color: var(--color-warning-text);
     }
 
     .spacer { flex: 1; }
 
     .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
       background: none;
       border: none;
-      color: #9ca3af;
-      font-size: 1rem;
-      padding: 4px 8px;
-      border-radius: 6px;
-      transition: color 0.2s, background 0.2s;
+      color: var(--color-text-subtle);
+      border-radius: 7px;
+      text-decoration: none;
+      transition: color 0.15s, background 0.15s;
     }
 
-    .icon-btn:hover { color: #6366f1; background: #eef2ff; }
-    .icon-btn.delete:hover { color: #ef4444; background: #fee2e2; }
+    .icon-btn:hover { color: var(--color-primary); background: var(--color-primary-light); }
+    .icon-btn.delete:hover { color: var(--color-danger-text); background: var(--color-danger-bg); }
 
-    .empty-state {
-      text-align: center;
-      padding: 48px 0;
-      color: #9ca3af;
-    }
-
-    .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty-state { text-align: center; padding: 48px 0; color: var(--color-text-subtle); }
+    .empty-state .icon { margin-bottom: 10px; color: var(--color-text-subtle); }
+    .empty-state p { font-size: 0.88rem; }
 
     .notes-text {
-      font-size: 0.85rem;
-      color: #6b7280;
-      margin-top: 8px;
+      font-size: 0.83rem;
+      color: var(--color-text-muted);
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--color-border);
       font-style: italic;
     }
 
-    .hint {
-      font-size: 0.82rem;
-      color: #9ca3af;
-      margin-top: -4px;
-    }
+    /* ---- Tabs ---- */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
-    @media (max-width: 640px) {
-      body { padding: 20px 12px 40px; }
-      h1 { font-size: 1.5rem; }
-      .subtitle { margin-bottom: 18px; }
-      .header-row { flex-wrap: wrap; }
-      .tab-btn { padding: 8px 12px; font-size: 0.85rem; }
-      .card { padding: 16px; }
-      .form-actions { flex-wrap: wrap; }
-      .location-top, .machine-top { flex-direction: column; }
-      .status-badge { align-self: flex-start; }
+    /* ---- Responsive ---- */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 20px 16px 84px; }
+      .mobile-topbar { display: flex; }
+      .bottom-nav { display: flex; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header-row">
-      <div>
-        <h1>🚜 Gestion du parc machine</h1>
-        <p class="subtitle">Suivi interne du parc et des locations de machines.</p>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark" id="sidebarLogoMark"></span>
+        <div>
+          <div class="brand-title">Parc Machine</div>
+          <div class="brand-subtitle">Gestion des locations</div>
+        </div>
       </div>
-      <a class="logout-link" href="/logout">Déconnexion</a>
-    </div>
-
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="locations">Locations</button>
-      <button class="tab-btn" data-tab="calendrier">Calendrier</button>
-      <button class="tab-btn" data-tab="machines">Parc machine</button>
-      <button class="tab-btn" data-tab="accessoires">Accessoires</button>
-    </div>
-
-    <!-- ===== Onglet Locations ===== -->
-    <div class="tab-panel active" id="tab-locations">
-      <div class="card">
-        <h2 id="formTitle">Nouvelle location</h2>
-        <form class="form-grid" id="locationForm">
-          <div class="field">
-            <label for="machineSelect">Machine *</label>
-            <select id="machineSelect"></select>
-          </div>
-          <div class="field">
-            <label for="client">Client</label>
-            <input type="text" id="client" placeholder="Nom du client" autocomplete="off" />
-          </div>
-          <div class="field">
-            <label for="clientCodeEbp">Code client EBP</label>
-            <input type="text" id="clientCodeEbp" placeholder="Ex: CL00123" autocomplete="off" />
-          </div>
-          <div class="field">
-            <label for="clientTelephone">Numéro de portable</label>
-            <input type="text" id="clientTelephone" placeholder="Ex: 06 12 34 56 78" autocomplete="off" />
-          </div>
-          <div class="field">
-            <label for="dateDebut">Date de début *</label>
-            <input type="date" id="dateDebut" />
-          </div>
-          <div class="field">
-            <label for="dateFin">Date de fin *</label>
-            <input type="date" id="dateFin" />
-          </div>
-          <div class="field">
-            <label for="compteurDebut">Relevé compteur début</label>
-            <input type="number" step="0.1" id="compteurDebut" placeholder="Ex: 1230.5" />
-          </div>
-          <div class="field">
-            <label for="compteurFin">Relevé compteur fin</label>
-            <input type="number" step="0.1" id="compteurFin" placeholder="Ex: 1255.0" />
-          </div>
-          <div class="field">
-            <label for="livraison">Livraison</label>
-            <select id="livraison">
-              <option value="retrait_site">Retrait sur site</option>
-              <option value="transporteur">Transporteur</option>
-              <option value="gresiloc">Livraison par Gresiloc</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="statutEbp">Statut</label>
-            <select id="statutEbp">
-              <option value="a_creer_ebp">À créer sur EBP</option>
-              <option value="a_facturer_ebp">À facturer EBP</option>
-              <option value="hors_radar">Hors radar</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="referent">Référent</label>
-            <select id="referent">
-              <option value="">Non assigné</option>
-              <option value="robin">Robin</option>
-              <option value="jeremie">Jérémie</option>
-              <option value="sebastien">Sébastien</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="accessoire1Select">Accessoire 1</label>
-            <select id="accessoire1Select"></select>
-          </div>
-          <div class="field">
-            <label for="accessoire2Select">Accessoire 2</label>
-            <select id="accessoire2Select"></select>
-          </div>
-          <div class="field">
-            <label for="accessoire3Select">Accessoire 3</label>
-            <select id="accessoire3Select"></select>
-          </div>
-          <div class="field">
-            <label for="notes">Notes</label>
-            <input type="text" id="notes" placeholder="Notes (optionnel)" autocomplete="off" />
-          </div>
-
-          <div class="checks">
-            <label class="check-item"><input type="checkbox" id="reglementRecu" /> Règlement reçu</label>
-            <label class="check-item"><input type="checkbox" id="cautionOk" /> Caution ok</label>
-            <label class="check-item"><input type="checkbox" id="assuranceOk" /> Assurance ok</label>
-          </div>
-
-          <p class="error-msg" id="errorMsg"></p>
-
-          <div class="form-actions">
-            <button type="submit" class="btn-primary" id="submitBtn">Ajouter</button>
-            <button type="button" class="btn-secondary" id="cancelBtn" style="display:none;">Annuler</button>
-          </div>
-        </form>
+      <nav class="sidebar-nav">
+        <button class="nav-link active" data-tab="locations" id="navLocations"></button>
+        <button class="nav-link" data-tab="calendrier" id="navCalendrier"></button>
+        <button class="nav-link" data-tab="machines" id="navMachines"></button>
+        <button class="nav-link" data-tab="accessoires" id="navAccessoires"></button>
+      </nav>
+      <div class="sidebar-footer">
+        <a class="nav-link" href="/logout" id="navLogoutDesktop"></a>
       </div>
-    </div>
+    </aside>
 
-    <!-- ===== Onglet Calendrier ===== -->
-    <div class="tab-panel" id="tab-calendrier">
-      <div class="card calendar-card">
-        <span>🔗 Abonnement Google Agenda :</span>
-        <input type="text" id="calendarFeedUrl" readonly value="Chargement..." onclick="this.select()" />
-        <button type="button" class="btn-secondary" id="copyFeedBtn">Copier le lien</button>
+    <header class="mobile-topbar">
+      <div class="brand">
+        <span class="brand-mark" id="mobileLogoMark"></span>
+        <div class="brand-title">Parc Machine</div>
       </div>
+      <a class="icon-btn-outline" href="/logout" id="navLogoutMobile" title="Déconnexion"></a>
+    </header>
 
-      <div class="filters">
-        <button class="filter-btn active" data-filter="all">Toutes</button>
-        <button class="filter-btn" data-filter="a_venir">À venir</button>
-        <button class="filter-btn" data-filter="en_cours">En cours</button>
-        <button class="filter-btn" data-filter="terminee">Terminées</button>
+    <main class="main">
+      <div class="content">
+        <!-- ===== Onglet Locations ===== -->
+        <div class="tab-panel active" id="tab-locations">
+          <div class="page-header">
+            <h1>Locations</h1>
+            <p>Créez une nouvelle location ou modifiez une location existante.</p>
+          </div>
+
+          <div class="card">
+            <h2 id="formTitle">Nouvelle location</h2>
+            <form class="form-grid" id="locationForm">
+              <div class="field">
+                <label for="machineSelect">Machine *</label>
+                <select id="machineSelect"></select>
+              </div>
+              <div class="field">
+                <label for="client">Client</label>
+                <input type="text" id="client" placeholder="Nom du client" autocomplete="off" />
+              </div>
+              <div class="field">
+                <label for="clientCodeEbp">Code client EBP</label>
+                <input type="text" id="clientCodeEbp" placeholder="Ex: CL00123" autocomplete="off" />
+              </div>
+              <div class="field">
+                <label for="clientTelephone">Numéro de portable</label>
+                <input type="text" id="clientTelephone" placeholder="Ex: 06 12 34 56 78" autocomplete="off" />
+              </div>
+              <div class="field">
+                <label for="dateDebut">Date de début *</label>
+                <input type="date" id="dateDebut" />
+              </div>
+              <div class="field">
+                <label for="dateFin">Date de fin *</label>
+                <input type="date" id="dateFin" />
+              </div>
+              <div class="field">
+                <label for="compteurDebut">Relevé compteur début</label>
+                <input type="number" step="0.1" id="compteurDebut" placeholder="Ex: 1230.5" />
+              </div>
+              <div class="field">
+                <label for="compteurFin">Relevé compteur fin</label>
+                <input type="number" step="0.1" id="compteurFin" placeholder="Ex: 1255.0" />
+              </div>
+              <div class="field">
+                <label for="livraison">Livraison</label>
+                <select id="livraison">
+                  <option value="retrait_site">Retrait sur site</option>
+                  <option value="transporteur">Transporteur</option>
+                  <option value="gresiloc">Livraison par Gresiloc</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="statutEbp">Statut</label>
+                <select id="statutEbp">
+                  <option value="a_creer_ebp">À créer sur EBP</option>
+                  <option value="a_facturer_ebp">À facturer EBP</option>
+                  <option value="hors_radar">Hors radar</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="referent">Référent</label>
+                <select id="referent">
+                  <option value="">Non assigné</option>
+                  <option value="robin">Robin</option>
+                  <option value="jeremie">Jérémie</option>
+                  <option value="sebastien">Sébastien</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="accessoire1Select">Accessoire 1</label>
+                <select id="accessoire1Select"></select>
+              </div>
+              <div class="field">
+                <label for="accessoire2Select">Accessoire 2</label>
+                <select id="accessoire2Select"></select>
+              </div>
+              <div class="field">
+                <label for="accessoire3Select">Accessoire 3</label>
+                <select id="accessoire3Select"></select>
+              </div>
+              <div class="field">
+                <label for="notes">Notes</label>
+                <input type="text" id="notes" placeholder="Notes (optionnel)" autocomplete="off" />
+              </div>
+
+              <div class="checks">
+                <label class="check-item"><input type="checkbox" id="reglementRecu" /> Règlement reçu</label>
+                <label class="check-item"><input type="checkbox" id="cautionOk" /> Caution ok</label>
+                <label class="check-item"><input type="checkbox" id="assuranceOk" /> Assurance ok</label>
+              </div>
+
+              <p class="error-msg" id="errorMsg"></p>
+
+              <div class="form-actions">
+                <button type="submit" class="btn-primary" id="submitBtn">Ajouter</button>
+                <button type="button" class="btn-secondary" id="cancelBtn" style="display:none;">Annuler</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- ===== Onglet Calendrier ===== -->
+        <div class="tab-panel" id="tab-calendrier">
+          <div class="page-header">
+            <h1>Calendrier</h1>
+            <p>Vue d'ensemble des locations à venir, en cours et terminées.</p>
+          </div>
+
+          <div class="stats-row" id="statsRow"></div>
+
+          <div class="card calendar-card">
+            <span class="calendar-label" id="calendarLabel"></span>
+            <input type="text" id="calendarFeedUrl" readonly value="Chargement..." onclick="this.select()" />
+            <button type="button" class="btn-secondary" id="copyFeedBtn"></button>
+          </div>
+
+          <div class="filters">
+            <button class="filter-btn active" data-filter="all">Toutes</button>
+            <button class="filter-btn" data-filter="a_venir">À venir</button>
+            <button class="filter-btn" data-filter="en_cours">En cours</button>
+            <button class="filter-btn" data-filter="terminee">Terminées</button>
+          </div>
+
+          <div class="location-list" id="locationList"></div>
+        </div>
+
+        <!-- ===== Onglet Parc machine ===== -->
+        <div class="tab-panel" id="tab-machines">
+          <div class="page-header">
+            <h1>Parc machine</h1>
+            <p>Gérez vos machines et leur numéro de série.</p>
+          </div>
+
+          <div class="card">
+            <h2 id="machineFormTitle">Nouvelle machine</h2>
+            <form class="form-grid" id="machineForm">
+              <div class="field">
+                <label for="machineNom">Nom / désignation *</label>
+                <input type="text" id="machineNom" placeholder="Ex: Mini-pelle 3T" autocomplete="off" />
+              </div>
+              <div class="field">
+                <label for="machineSerie">Numéro de série *</label>
+                <input type="text" id="machineSerie" placeholder="Ex: SN-2024-0012" autocomplete="off" />
+              </div>
+              <div class="field">
+                <label for="machineStatut">Statut</label>
+                <select id="machineStatut">
+                  <option value="disponible">Disponible</option>
+                  <option value="preparation">Préparation</option>
+                  <option value="vidange">Vidange</option>
+                  <option value="indisponible">Indisponible</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="machineNotes">Notes</label>
+                <input type="text" id="machineNotes" placeholder="Notes (optionnel)" autocomplete="off" />
+              </div>
+
+              <p class="error-msg" id="machineErrorMsg"></p>
+
+              <div class="form-actions">
+                <button type="submit" class="btn-primary" id="machineSubmitBtn">Ajouter</button>
+                <button type="button" class="btn-secondary" id="machineCancelBtn" style="display:none;">Annuler</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="item-list" id="machineList"></div>
+        </div>
+
+        <!-- ===== Onglet Accessoires ===== -->
+        <div class="tab-panel" id="tab-accessoires">
+          <div class="page-header">
+            <h1>Accessoires</h1>
+            <p>Gérez la liste des accessoires disponibles pour vos locations.</p>
+          </div>
+
+          <div class="card">
+            <h2 id="accessoireFormTitle">Nouvel accessoire</h2>
+            <form class="form-grid" id="accessoireForm">
+              <div class="field">
+                <label for="accessoireNom">Nom *</label>
+                <input type="text" id="accessoireNom" placeholder="Ex: Godet curage 40cm" autocomplete="off" />
+              </div>
+              <div class="field">
+                <label for="accessoireNotes">Notes</label>
+                <input type="text" id="accessoireNotes" placeholder="Notes (optionnel)" autocomplete="off" />
+              </div>
+
+              <p class="error-msg" id="accessoireErrorMsg"></p>
+
+              <div class="form-actions">
+                <button type="submit" class="btn-primary" id="accessoireSubmitBtn">Ajouter</button>
+                <button type="button" class="btn-secondary" id="accessoireCancelBtn" style="display:none;">Annuler</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="item-list" id="accessoireList"></div>
+        </div>
       </div>
+    </main>
 
-      <div class="location-list" id="locationList"></div>
-    </div>
-
-    <!-- ===== Onglet Parc machine ===== -->
-    <div class="tab-panel" id="tab-machines">
-      <div class="card">
-        <h2 id="machineFormTitle">Nouvelle machine</h2>
-        <form class="form-grid" id="machineForm">
-          <div class="field">
-            <label for="machineNom">Nom / désignation *</label>
-            <input type="text" id="machineNom" placeholder="Ex: Mini-pelle 3T" autocomplete="off" />
-          </div>
-          <div class="field">
-            <label for="machineSerie">Numéro de série *</label>
-            <input type="text" id="machineSerie" placeholder="Ex: SN-2024-0012" autocomplete="off" />
-          </div>
-          <div class="field">
-            <label for="machineStatut">Statut</label>
-            <select id="machineStatut">
-              <option value="disponible">Disponible</option>
-              <option value="preparation">Préparation</option>
-              <option value="vidange">Vidange</option>
-              <option value="indisponible">Indisponible</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="machineNotes">Notes</label>
-            <input type="text" id="machineNotes" placeholder="Notes (optionnel)" autocomplete="off" />
-          </div>
-
-          <p class="error-msg" id="machineErrorMsg"></p>
-
-          <div class="form-actions">
-            <button type="submit" class="btn-primary" id="machineSubmitBtn">Ajouter</button>
-            <button type="button" class="btn-secondary" id="machineCancelBtn" style="display:none;">Annuler</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="machine-list" id="machineList"></div>
-    </div>
-
-    <!-- ===== Onglet Accessoires ===== -->
-    <div class="tab-panel" id="tab-accessoires">
-      <div class="card">
-        <h2 id="accessoireFormTitle">Nouvel accessoire</h2>
-        <form class="form-grid" id="accessoireForm">
-          <div class="field">
-            <label for="accessoireNom">Nom *</label>
-            <input type="text" id="accessoireNom" placeholder="Ex: Godet curage 40cm" autocomplete="off" />
-          </div>
-          <div class="field">
-            <label for="accessoireNotes">Notes</label>
-            <input type="text" id="accessoireNotes" placeholder="Notes (optionnel)" autocomplete="off" />
-          </div>
-
-          <p class="error-msg" id="accessoireErrorMsg"></p>
-
-          <div class="form-actions">
-            <button type="submit" class="btn-primary" id="accessoireSubmitBtn">Ajouter</button>
-            <button type="button" class="btn-secondary" id="accessoireCancelBtn" style="display:none;">Annuler</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="machine-list" id="accessoireList"></div>
-    </div>
+    <nav class="bottom-nav">
+      <button class="nav-link active" data-tab="locations" id="navLocationsMobile"></button>
+      <button class="nav-link" data-tab="calendrier" id="navCalendrierMobile"></button>
+      <button class="nav-link" data-tab="machines" id="navMachinesMobile"></button>
+      <button class="nav-link" data-tab="accessoires" id="navAccessoiresMobile"></button>
+    </nav>
   </div>
 
   <script>
+    const ICONS = {
+      truck: '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="12"/><path d="M15 10h4l3 3v5h-7z"/><circle cx="6" cy="19" r="1.8"/><circle cx="17.5" cy="19" r="1.8"/></svg>',
+      list: '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1" fill="currentColor" stroke="none"/></svg>',
+      calendar: '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+      wrench: '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 1 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.8 2.8-2-2z"/></svg>',
+      logout: '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+      edit: '<svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+      trash: '<svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+      link: '<svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.5-1.5"/></svg>',
+      copy: '<svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+      user: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+      tag: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.24L4 3a1 1 0 0 0-1 1l.24 5.59a2 2 0 0 0 .59 1.41l9.58 9.59a2 2 0 0 0 2.83 0l4.35-4.35a2 2 0 0 0 0-2.83Z"/><circle cx="8.5" cy="8.5" r="1.1" fill="currentColor" stroke="none"/></svg>',
+      phone: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+      clock: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+      box: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8L12 3 3 8l9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>',
+      pin: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+      check: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+      square: '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>',
+      toolbox: '<svg class="icon" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="2" y1="13" x2="22" y2="13"/><line x1="10" y1="13" x2="14" y2="13"/></svg>',
+    };
+
+    function icon(name, size) {
+      const svg = ICONS[name] || '';
+      if (!size) return svg;
+      return svg.replace(/width="\d+(\.\d+)?"/, `width="${size}"`).replace(/height="\d+(\.\d+)?"/, `height="${size}"`);
+    }
+
+    document.getElementById('sidebarLogoMark').innerHTML = icon('truck', 19);
+    document.getElementById('mobileLogoMark').innerHTML = icon('truck', 18);
+    document.getElementById('navLocations').innerHTML = icon('list') + '<span>Locations</span>';
+    document.getElementById('navCalendrier').innerHTML = icon('calendar') + '<span>Calendrier</span>';
+    document.getElementById('navMachines').innerHTML = icon('truck') + '<span>Parc machine</span>';
+    document.getElementById('navAccessoires').innerHTML = icon('wrench') + '<span>Accessoires</span>';
+    document.getElementById('navLogoutDesktop').innerHTML = icon('logout') + '<span>Déconnexion</span>';
+    document.getElementById('navLogoutMobile').innerHTML = icon('logout', 16);
+    document.getElementById('navLocationsMobile').innerHTML = icon('list', 19) + '<span>Locations</span>';
+    document.getElementById('navCalendrierMobile').innerHTML = icon('calendar', 19) + '<span>Calendrier</span>';
+    document.getElementById('navMachinesMobile').innerHTML = icon('truck', 19) + '<span>Parc</span>';
+    document.getElementById('navAccessoiresMobile').innerHTML = icon('wrench', 19) + '<span>Accessoires</span>';
+    document.getElementById('calendarLabel').innerHTML = icon('link') + 'Abonnement Google Agenda :';
+    document.getElementById('copyFeedBtn').innerHTML = icon('copy') + 'Copier le lien';
+
     const LOCATIONS_API = '/api/locations';
     const MACHINES_API = '/api/machines';
     const ACCESSOIRES_API = '/api/accessoires';
@@ -600,9 +832,15 @@
     let editingAccessoireId = null;
 
     const DELIVERY_LABELS = {
-      retrait_site: '📍 Retrait sur site',
-      transporteur: '🚚 Transporteur',
-      gresiloc: '🚛 Livraison par Gresiloc',
+      retrait_site: 'Retrait sur site',
+      transporteur: 'Transporteur',
+      gresiloc: 'Livraison par Gresiloc',
+    };
+
+    const DELIVERY_ICONS = {
+      retrait_site: 'pin',
+      transporteur: 'truck',
+      gresiloc: 'truck',
     };
 
     const MACHINE_STATUS_LABELS = {
@@ -639,11 +877,12 @@
 
     // ---- Tabs ----
     function switchTab(tab) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      document.querySelectorAll('.nav-link[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === `tab-${tab}`));
+      window.scrollTo({ top: 0 });
     }
 
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    document.querySelectorAll('.nav-link[data-tab]').forEach(btn => {
       btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
 
@@ -750,9 +989,8 @@
       editingLocationId = loc.id;
       submitBtn.textContent = 'Mettre à jour';
       formTitle.textContent = 'Modifier la location';
-      cancelBtn.style.display = 'inline-block';
+      cancelBtn.style.display = 'inline-flex';
       errorMsg.style.display = 'none';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function startEditLocation(id) {
@@ -846,17 +1084,40 @@
       if (!loc.compteur_debut && !loc.compteur_fin) return '';
       const debut = loc.compteur_debut || '?';
       const fin = loc.compteur_fin || '?';
-      return `<div class="location-compteur">⏱️ Compteur : ${escapeHtml(debut)} → ${escapeHtml(fin)}</div>`;
+      return `<div class="location-compteur">${icon('clock')} Compteur : ${escapeHtml(debut)} → ${escapeHtml(fin)}</div>`;
     }
 
     function accessoiresLine(loc) {
       const noms = [loc.accessoire1_nom, loc.accessoire2_nom, loc.accessoire3_nom].filter(Boolean);
       if (noms.length === 0) return '';
-      return `<div class="location-compteur">🧰 Accessoires : ${noms.map(escapeHtml).join(', ')}</div>`;
+      return `<div class="location-compteur">${icon('box')} Accessoires : ${noms.map(escapeHtml).join(', ')}</div>`;
+    }
+
+    function updateStats() {
+      const withStatus = locations.map(l => computeStatus(l));
+      const counts = {
+        all: locations.length,
+        a_venir: withStatus.filter(s => s === 'a_venir').length,
+        en_cours: withStatus.filter(s => s === 'en_cours').length,
+        terminee: withStatus.filter(s => s === 'terminee').length,
+      };
+      const tiles = [
+        { label: 'Total locations', value: counts.all },
+        { label: 'À venir', value: counts.a_venir },
+        { label: 'En cours', value: counts.en_cours },
+        { label: 'Terminées', value: counts.terminee },
+      ];
+      document.getElementById('statsRow').innerHTML = tiles.map(t => `
+        <div class="stat-tile">
+          <div class="stat-value">${t.value}</div>
+          <div class="stat-label">${t.label}</div>
+        </div>
+      `).join('');
     }
 
     function renderLocations() {
       const list = document.getElementById('locationList');
+      updateStats();
 
       const withStatus = locations.map(l => ({ ...l, status: computeStatus(l) }));
       const visible = withStatus.filter(l => filter === 'all' || l.status === filter);
@@ -864,7 +1125,7 @@
       if (visible.length === 0) {
         list.innerHTML = `
           <div class="empty-state">
-            <div class="icon">🛠️</div>
+            <div class="icon">${icon('calendar', 34)}</div>
             <p>Aucune location à afficher.</p>
           </div>`;
         return;
@@ -875,11 +1136,16 @@
           <div class="location-top">
             <div>
               <div class="location-title">${escapeHtml(loc.machine_nom)}</div>
-              <div class="location-client">🔧 SN ${escapeHtml(loc.machine_numero_serie)}${loc.client ? ` · 👤 ${escapeHtml(loc.client)}` : ''}${loc.client_code_ebp ? ` · 🏷️ ${escapeHtml(loc.client_code_ebp)}` : ''}${loc.client_telephone ? ` · 📱 ${escapeHtml(loc.client_telephone)}` : ''}</div>
+              <div class="location-submeta">
+                <span class="meta-chip">${icon('tag')} SN ${escapeHtml(loc.machine_numero_serie)}</span>
+                ${loc.client ? `<span class="meta-chip">${icon('user')} ${escapeHtml(loc.client)}</span>` : ''}
+                ${loc.client_code_ebp ? `<span class="meta-chip">${icon('tag')} ${escapeHtml(loc.client_code_ebp)}</span>` : ''}
+                ${loc.client_telephone ? `<span class="meta-chip">${icon('phone')} ${escapeHtml(loc.client_telephone)}</span>` : ''}
+              </div>
             </div>
-            <span class="status-badge status-${loc.status}">${STATUS_LABELS[loc.status]}</span>
+            <span class="pill pill-${loc.status}">${STATUS_LABELS[loc.status]}</span>
           </div>
-          <div class="location-dates">📅 ${formatDate(loc.date_debut)} → ${formatDate(loc.date_fin)}</div>
+          <div class="location-dates">${icon('calendar')} ${formatDate(loc.date_debut)} → ${formatDate(loc.date_fin)}</div>
           ${compteurLine(loc)}
           ${accessoiresLine(loc)}
           <div class="location-meta">
@@ -889,25 +1155,25 @@
               ).join('')}
             </select>
             <select class="status-select" onchange="setLocationField('${loc.id}', 'referent', this.value)">
-              <option value="" ${!loc.referent ? 'selected' : ''}>👤 Non assigné</option>
+              <option value="" ${!loc.referent ? 'selected' : ''}>Non assigné</option>
               ${Object.entries(REFERENT_LABELS).map(([value, label]) =>
-                `<option value="${value}" ${loc.referent === value ? 'selected' : ''}>👤 ${label}</option>`
+                `<option value="${value}" ${loc.referent === value ? 'selected' : ''}>${label}</option>`
               ).join('')}
             </select>
             <span class="toggle-badge ${loc.reglement_recu ? 'ok' : ''}" onclick="toggleLocationField('${loc.id}', 'reglement_recu', ${loc.reglement_recu})">
-              ${loc.reglement_recu ? '✅' : '⬜'} Règlement reçu
+              ${icon(loc.reglement_recu ? 'check' : 'square')} Règlement reçu
             </span>
             <span class="toggle-badge ${loc.caution_ok ? 'ok' : ''}" onclick="toggleLocationField('${loc.id}', 'caution_ok', ${loc.caution_ok})">
-              ${loc.caution_ok ? '✅' : '⬜'} Caution ok
+              ${icon(loc.caution_ok ? 'check' : 'square')} Caution ok
             </span>
             <span class="toggle-badge ${loc.assurance_ok ? 'ok' : ''}" onclick="toggleLocationField('${loc.id}', 'assurance_ok', ${loc.assurance_ok})">
-              ${loc.assurance_ok ? '✅' : '⬜'} Assurance ok
+              ${icon(loc.assurance_ok ? 'check' : 'square')} Assurance ok
             </span>
-            <span class="delivery-badge">${DELIVERY_LABELS[loc.livraison] || loc.livraison}</span>
+            <span class="delivery-badge">${icon(DELIVERY_ICONS[loc.livraison] || 'truck')} ${DELIVERY_LABELS[loc.livraison] || loc.livraison}</span>
             <span class="spacer"></span>
-            <a class="icon-btn" href="/api/locations/${loc.id}/ics" title="Exporter .ics">📅</a>
-            <button class="icon-btn" onclick="startEditLocation('${loc.id}')" title="Modifier">✏️</button>
-            <button class="icon-btn delete" onclick="deleteLocation('${loc.id}')" title="Supprimer">✕</button>
+            <a class="icon-btn" href="/api/locations/${loc.id}/ics" title="Exporter .ics">${icon('calendar', 16)}</a>
+            <button class="icon-btn" onclick="startEditLocation('${loc.id}')" title="Modifier">${icon('edit')}</button>
+            <button class="icon-btn delete" onclick="deleteLocation('${loc.id}')" title="Supprimer">${icon('trash')}</button>
           </div>
           ${loc.notes ? `<div class="notes-text">${escapeHtml(loc.notes)}</div>` : ''}
         </div>
@@ -947,9 +1213,8 @@
       editingMachineId = m.id;
       machineSubmitBtn.textContent = 'Mettre à jour';
       machineFormTitle.textContent = 'Modifier la machine';
-      machineCancelBtn.style.display = 'inline-block';
+      machineCancelBtn.style.display = 'inline-flex';
       machineErrorMsg.style.display = 'none';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function startEditMachine(id) {
@@ -1010,18 +1275,20 @@
       if (machines.length === 0) {
         list.innerHTML = `
           <div class="empty-state">
-            <div class="icon">🚜</div>
+            <div class="icon">${icon('truck', 34)}</div>
             <p>Aucune machine dans le parc.</p>
           </div>`;
         return;
       }
 
       list.innerHTML = machines.map(m => `
-        <div class="machine-item">
-          <div class="machine-top">
+        <div class="item-card">
+          <div class="item-top">
             <div>
-              <div class="machine-title">${escapeHtml(m.nom)}</div>
-              <div class="machine-serial">🔧 SN ${escapeHtml(m.numero_serie)}</div>
+              <div class="item-title">${escapeHtml(m.nom)}</div>
+              <div class="location-submeta">
+                <span class="meta-chip">${icon('tag')} SN ${escapeHtml(m.numero_serie)}</span>
+              </div>
             </div>
             <select class="status-select status-${m.statut}" onchange="changeMachineStatus('${m.id}', this.value)">
               ${Object.entries(MACHINE_STATUS_LABELS).map(([value, label]) =>
@@ -1029,10 +1296,10 @@
               ).join('')}
             </select>
           </div>
-          <div class="location-meta" style="border-top:none; margin-top:0; padding-top:0;">
+          <div class="location-meta">
             <span class="spacer"></span>
-            <button class="icon-btn" onclick="startEditMachine('${m.id}')" title="Modifier">✏️</button>
-            <button class="icon-btn delete" onclick="deleteMachine('${m.id}')" title="Supprimer">✕</button>
+            <button class="icon-btn" onclick="startEditMachine('${m.id}')" title="Modifier">${icon('edit')}</button>
+            <button class="icon-btn delete" onclick="deleteMachine('${m.id}')" title="Supprimer">${icon('trash')}</button>
           </div>
           ${m.notes ? `<div class="notes-text">${escapeHtml(m.notes)}</div>` : ''}
         </div>
@@ -1069,9 +1336,8 @@
       editingAccessoireId = a.id;
       accessoireSubmitBtn.textContent = 'Mettre à jour';
       accessoireFormTitle.textContent = "Modifier l'accessoire";
-      accessoireCancelBtn.style.display = 'inline-block';
+      accessoireCancelBtn.style.display = 'inline-flex';
       accessoireErrorMsg.style.display = 'none';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function startEditAccessoire(id) {
@@ -1121,19 +1387,19 @@
       if (accessoires.length === 0) {
         list.innerHTML = `
           <div class="empty-state">
-            <div class="icon">🧰</div>
+            <div class="icon">${icon('wrench', 34)}</div>
             <p>Aucun accessoire enregistré.</p>
           </div>`;
         return;
       }
 
       list.innerHTML = accessoires.map(a => `
-        <div class="machine-item">
-          <div class="machine-top">
-            <div class="machine-title">${escapeHtml(a.nom)}</div>
+        <div class="item-card">
+          <div class="item-top">
+            <div class="item-title">${escapeHtml(a.nom)}</div>
             <div class="location-meta" style="border-top:none; margin-top:0; padding-top:0;">
-              <button class="icon-btn" onclick="startEditAccessoire('${a.id}')" title="Modifier">✏️</button>
-              <button class="icon-btn delete" onclick="deleteAccessoire('${a.id}')" title="Supprimer">✕</button>
+              <button class="icon-btn" onclick="startEditAccessoire('${a.id}')" title="Modifier">${icon('edit')}</button>
+              <button class="icon-btn delete" onclick="deleteAccessoire('${a.id}')" title="Supprimer">${icon('trash')}</button>
             </div>
           </div>
           ${a.notes ? `<div class="notes-text">${escapeHtml(a.notes)}</div>` : ''}

@@ -39,59 +39,95 @@ LOGIN_PAGE = """
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Connexion - Gestion du parc machine</title>
+  <title>Connexion - Parc Machine</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f2f5;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #f8fafc;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 16px;
     }
     .login-card {
       background: #fff;
+      border: 1px solid #e2e8f0;
       border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
       padding: 36px 32px;
       width: 100%;
       max-width: 360px;
     }
-    h1 { font-size: 1.4rem; color: #1a1a2e; margin-bottom: 4px; }
-    p.subtitle { color: #6b7280; font-size: 0.9rem; margin-bottom: 24px; }
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: #2563eb;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+    h1 { font-size: 1.25rem; color: #0f172a; margin-bottom: 4px; }
+    p.subtitle { color: #64748b; font-size: 0.88rem; margin-bottom: 24px; }
+    label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 6px;
+    }
     input[type="password"] {
       width: 100%;
-      padding: 11px 14px;
-      border: 2px solid #e5e7eb;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
       border-radius: 8px;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       outline: none;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
+      font-family: inherit;
+      height: 40px;
     }
-    input[type="password"]:focus { border-color: #6366f1; }
+    input[type="password"]:focus { border-color: #2563eb; box-shadow: 0 0 0 3px #eff6ff; }
     button {
       width: 100%;
       padding: 11px;
-      background: #6366f1;
+      background: #2563eb;
       color: #fff;
       border: none;
       border-radius: 8px;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 600;
       cursor: pointer;
+      font-family: inherit;
     }
-    button:hover { background: #4f46e5; }
-    .error { color: #dc2626; font-size: 0.85rem; margin-bottom: 14px; }
+    button:hover { background: #1d4ed8; }
+    .error {
+      color: #991b1b;
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 0.83rem;
+      margin-bottom: 16px;
+    }
   </style>
 </head>
 <body>
   <div class="login-card">
-    <h1>🚜 Gestion du parc machine</h1>
+    <div class="brand-mark">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="12"/><path d="M15 10h4l3 3v5h-7z"/><circle cx="6" cy="19" r="1.8"/><circle cx="17.5" cy="19" r="1.8"/></svg>
+    </div>
+    <h1>Parc Machine</h1>
     <p class="subtitle">Accès réservé à l'équipe.</p>
     {% if error %}<p class="error">{{ error }}</p>{% endif %}
     <form method="POST">
-      <input type="password" name="password" placeholder="Mot de passe" autofocus required />
+      <label for="password">Mot de passe</label>
+      <input type="password" id="password" name="password" placeholder="••••••••" autofocus required />
       <button type="submit">Se connecter</button>
     </form>
   </div>
